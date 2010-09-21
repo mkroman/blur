@@ -5,6 +5,8 @@ require 'pulse/client'
 require 'pulse/command'
 require 'pulse/connection'
 
+Thread.abort_on_exception = true
+
 module Pulse
   VERSION = [1, 0, 0]
 

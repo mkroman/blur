@@ -16,14 +16,12 @@ module Pulse
 
     def establish
       TCPSocket.open DefaultHost, DefaultPort do |socket|
-        Thread.start do
-          until socket.eof?
-            @delegate.got_command socket.gets
-          end
-        end
-
         @queue = Queue.new socket
-        @queue.process until socket.eof?
+        Thread.start &@queue.method(:process)
+
+        until socket.eof?
+          @delegate.got_command Command.parse(socket.gets)
+        end
       end
     end
 

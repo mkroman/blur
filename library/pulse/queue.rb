@@ -2,21 +2,25 @@
 
 module Pulse
   class Queue
-
     def initialize socket
       @socket, @queue = socket, []
     end
 
     def process
-      if command = @queue.shift
-        @socket.write "#{command}\n"
+      @thread = Thread.current
+
+      while @thread.alive?
+        if command = @queue.shift
+          @socket.write "#{command}\n"
+        else
+          Thread.stop
+        end
       end
     end
 
-    def push command
+    def << command
       @queue << command
+      @thread.run unless @thread.nil?
     end
-
-    alias_method :<<, :push
   end
 end

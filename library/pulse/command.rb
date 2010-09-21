@@ -2,17 +2,18 @@
 
 module Pulse
   class Command
-    def initialize name, params = []
-      self.name  = name
-      parameters = params
+    attr_accessor :name, :params
+
+    Pattern = //
+
+    def self.parse data
+      data
     end
 
-    def name= name
-      if name.is_a? String and name =~ /^\d+$/
-        @name = name.to_i
-      else
-        @name = name
-      end
+    def initialize name, params = []
+      @name, @params = name, params
     end
+
+    alias_method :parameters, :params
   end
 end
