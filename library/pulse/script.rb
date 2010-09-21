@@ -5,5 +5,9 @@ module Pulse
     def initialize
       # …
     end
+
+    def cache
+      @cache ||= Cache.new self
+    end
   end
 end
