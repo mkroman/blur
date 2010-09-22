@@ -11,7 +11,7 @@ module Pulse
       match = data.match HostPattern
       empty, prefix, name, params = match.captures
 
-      if match = params.match(CommandPattern)
+      if match = params.match(ExtraPattern)
         params = match.pre_match.split << match[1]
       else
         params = params.split
