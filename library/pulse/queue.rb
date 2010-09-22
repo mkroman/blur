@@ -2,11 +2,12 @@
 
 module Pulse
   class Queue
-    def initialize socket
-      @socket, @queue = socket, []
+    def initialize
+      @queue = []
     end
 
-    def process
+    def process socket
+      @socket ||= socket
       @thread = Thread.current
 
       while @thread.alive?

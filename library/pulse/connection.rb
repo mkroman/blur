@@ -1,9 +1,5 @@
 # encoding: utf-8
 
-require 'socket'
-
-Thread.abort_on_exception = true
-
 module Pulse
   class Connection
   
@@ -12,15 +8,15 @@ module Pulse
 
     def initialize delegate
       @delegate = delegate
+      @queue = Queue.new
     end
 
     def establish
       TCPSocket.open DefaultHost, DefaultPort do |socket|
-        @queue = Queue.new socket
-        Thread.start &@queue.method(:process)
+        Thread.start socket, &@queue.method(:process)
 
         until socket.eof?
-          @delegate.got_command Command.parse(socket.gets)
+          @delegate.got_command Command.parse socket.gets
         end
       end
     end

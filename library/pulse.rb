@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+require 'socket'
 require 'pulse/queue'
 require 'pulse/client'
 require 'pulse/command'
