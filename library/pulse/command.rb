@@ -4,18 +4,14 @@ module Pulse
   class Command
     attr_accessor :name, :params, :prefix
 
-    HostPattern  = /^(:(\S+) )?(\S+)(.*)/
-    ExtraPattern = /(?:^:| :)(.*)$/
-
+    Pattern = /^(?:[:@]([^\s]+) )?([^\s]+)(?: ((?:[^:\s][^\s]* ?)*))?(?: ?:(.*))?$/
+    
     def self.parse data
-      match = data.match HostPattern
-      empty, prefix, name, params = match.captures
+      match = data.strip.match Pattern
+      prefix, name, args, extra = match.captures
 
-      if match = params.match(ExtraPattern)
-        params = match.pre_match.split << match[1]
-      else
-        params = params.split
-      end
+      params = args.split
+      params << extra if extra
 
       new(name, params).tap do |this|
         this.prefix = prefix
@@ -24,6 +20,19 @@ module Pulse
 
     def initialize name, params = []
       @name, @params = name, params
+    end
+
+    def to_s
+      String.new.tap do |line|
+        line << "#{prefix} " if prefix
+        line << name.to_s
+
+        params.each_with_index do |param, index|
+          line << ' '
+          line << ?: if index == params.length - 1 and param =~ /[ :]/
+          line << param.to_s
+        end
+      end
     end
   end
 end

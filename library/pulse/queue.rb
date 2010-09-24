@@ -12,6 +12,7 @@ module Pulse
 
       while @thread.alive?
         if command = @queue.shift
+          puts ">> #{command}"
           @socket.write "#{command}\n"
         else
           Thread.stop
