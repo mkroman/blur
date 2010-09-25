@@ -7,7 +7,7 @@ module Pulse
     include Handling
 
     def initialize options
-      @channels   = []
+      @channels   = {}
       @callbacks  = {}
       @connection = Connection.new self
     end

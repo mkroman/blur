@@ -10,6 +10,17 @@ module Pulse
         transmit :JOIN, '#maero'
       end
 
+      # The /NAMES list
+      def got_353 command
+        users = command[3].split.map &User.method(:new)
+        @channels[command[2]] ||= Channel.new(command[2], users)
+      end
+
+      # End of /NAMES list
+      def got_366 command
+        
+      end
+
       # The IRCd is checking whether or not we're still alive
       # PING :1285409133
       # PONG :1285409133
@@ -27,12 +38,7 @@ module Pulse
       # mk!mk@maero.dk PRIVMSG #maero :tp: kod
       def got_privmsg command
         channel, message = command.params
-        transmit :PRIVMSG, channel, "#{message}"
-      end
-
-    private
-      def channel_with_name name
-        @channels.find { |channel| channel.name == name }
+        transmit :PRIVMSG, channel, "#{@channels[channel]}"
       end
     end
   end
