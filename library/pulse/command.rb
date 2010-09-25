@@ -10,8 +10,7 @@ module Pulse
       match = data.strip.match Pattern
       prefix, name, args, extra = match.captures
 
-      params = args.split
-      params << extra if extra
+      params = extra ? args.split : args.split << extra
 
       new(name, params).tap do |this|
         this.prefix = prefix
