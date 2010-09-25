@@ -22,7 +22,7 @@ module Pulse
 
     def << command
       @queue << command
-      @thread.run unless @thread.nil?
+      @thread.run if @thread
     end
   end
 end

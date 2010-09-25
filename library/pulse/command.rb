@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+require 'ostruct'
+
 module Pulse
   class Command
     attr_accessor :name, :params, :prefix
@@ -9,8 +11,7 @@ module Pulse
     def self.parse data
       match = data.strip.match Pattern
       prefix, name, args, extra = match.captures
-
-      params = extra ? args.split : args.split << extra
+      params = extra ? args.split << extra : args.split
 
       new(name, params).tap do |this|
         this.prefix = prefix
@@ -20,6 +21,18 @@ module Pulse
     def initialize name, params = []
       @name, @params = name, params
     end
+
+    def [] index; @params[index] end
+
+    def sender
+      return @sender if @sender
+
+      if prefix =~ /^(\S+)!(\S+)@(\S+)$/
+        @sender = OpenStruct.new nickname: $1, username: $2, hostname: $3
+      else
+        @sender = prefix
+      end
+    end 
 
     def to_s
       String.new.tap do |line|

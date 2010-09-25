@@ -7,11 +7,13 @@ module Pulse
     include Handling
 
     def initialize options
+      @channels   = []
+      @callbacks  = {}
       @connection = Connection.new self
     end
 
     def connect
-      trap 2 do; transmit :QUIT, "HUP SIGNAL" end
+      trap 2 do; transmit :QUIT, "I was interrupted" end
       @connection.establish
     end
 
@@ -25,6 +27,8 @@ module Pulse
     end
 
     def connection_established connection
+      puts "Connection has been established."
+
       transmit :NICK, 'pulse'
       transmit :USER, 'pulse', ?*, ?*, 'pulse'
     end
@@ -34,6 +38,16 @@ module Pulse
     end
 
   private
+    def emit name, *args
+      @callbacks[name].each do |callback|
+        callback.call *args
+      end if @callbacks[name]
+    end
+
+    def catch name, &block
+      (@callbacks[name] ||= []) << block
+    end
+
     def transmit name, *args
       @connection.transmit name, *args
     end
