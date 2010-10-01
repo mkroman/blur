@@ -37,6 +37,12 @@ module Pulse
       puts "The connection was terminated."
     end
 
+    def each_user name
+      @channels.values.select { |c| c.user? name }.each do |channel|
+        yield channel.user name
+      end
+    end
+
   private
     def emit name, *args
       @callbacks[name].each do |callback|

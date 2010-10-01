@@ -31,7 +31,10 @@ module Pulse
       # Someone has changed their nickname
       # mk!mk@maero.dk NICK mk_
       def got_nick command
-        transmit :privmsg, '#maero', "#{command.sender.nickname} -> #{command[0]}"
+        each_user command.sender.nickname do |user|
+          emit :nickchange, user, command[0]
+          user.name = command[0]
+        end
       end
 
       # Someone has send a message, it can be both a private message and a channel message
