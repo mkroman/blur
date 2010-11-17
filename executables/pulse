@@ -1,11 +1,14 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-$:.unshift File.dirname(__FILE__) + '/../library'
 require 'pulse'
 
-Pulse.connect hostname: 'irc.maero.dk' do
-  catch :nickchange do |user, nick|
-    puts "#{user.name} changed name to #{nick}"
+Pulse.connect hostname: 'irc.dk.quakenet.org', nickname: 'pulse' do
+  catch :connection_ready do
+    @connection.transmit :JOIN, '#warsow.na'
+  end
+
+  catch :message do |user, channel, line|
+    puts "#{user} says #{line}"
   end
 end

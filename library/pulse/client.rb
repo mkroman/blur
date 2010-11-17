@@ -6,10 +6,16 @@ module Pulse
   class Client
     include Handling
 
+    attr_accessor :scripts
+
     def initialize options
+      @scripts    = []
       @channels   = {}
+      @settings   = Settings.new options
       @callbacks  = {}
-      @connection = Connection.new self
+      @connection = Connection.new self, @settings
+
+      load_scripts
     end
 
     def connect
@@ -29,12 +35,22 @@ module Pulse
     def connection_established connection
       puts "Connection has been established."
 
-      transmit :NICK, 'pulse'
-      transmit :USER, 'pulse', ?*, ?*, 'pulse'
+      transmit :NICK, @settings.nickname
+      transmit :USER, @settings.username, ?*, ?*, @settings.realname
     end
 
     def connection_terminated connection
       puts "The connection was terminated."
+    end
+
+    def say recipient, line
+      transmit :PRIVMSG, recipient.to_s, line
+    end
+
+    def load_scripts
+      @settings.scripts.each do |path|
+        @scripts.<< Script.new path, self
+      end
     end
 
     def each_user name
@@ -44,10 +60,17 @@ module Pulse
     end
 
   private
+
     def emit name, *args
       @callbacks[name].each do |callback|
         callback.call *args
       end if @callbacks[name]
+
+      @scripts.each do |script|
+        if script.respond_to? name
+          script.__send__ name, *args
+        end
+      end
     end
 
     def catch name, &block

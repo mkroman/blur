@@ -2,17 +2,14 @@
 
 module Pulse
   class Connection
-  
-    DefaultHost = 'irc.maero.dk'
-    DefaultPort = 6667
-
-    def initialize delegate
+    def initialize delegate, settings
       @delegate = delegate
-      @queue = Queue.new
+      @settings = settings
+      @queue    = Queue.new
     end
 
     def establish
-      TCPSocket.open DefaultHost, DefaultPort do |socket|
+      TCPSocket.open @settings.hostname, @settings.port do |socket|
         Thread.start socket, &@queue.method(:process)
         @delegate.connection_established self
 

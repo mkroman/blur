@@ -8,8 +8,9 @@ module Pulse
       end
 
     private
+
       def path
-        "#{File.expand_path $0}/cache/#{@script.name}_#{@index}"
+        "#{File.expand_path $0}/cache/#{@script.name}_#@index"
       end
     end
   end
