@@ -14,6 +14,7 @@ module Pulse
       def got_353 command
         users = command[3].split.map &User.method(:new)
         @channels[command[2]] ||= Channel.new(command[2], self, users)
+        p users, command[3]
       end
 
       # The IRCd is checking whether or not we're still alive
@@ -36,10 +37,15 @@ module Pulse
       # a channel message
       # mk!mk@maero.dk PRIVMSG #maero :tp: kod
       def got_privmsg command
-        channel, message = command.params
-        user = @channels[channel].user command.sender.nickname
-        user.synchronize command.sender
-        emit :message, user, @channels[channel], message
+        name, message = command.params
+
+        if channel = @channels[name]
+          user = channel.user command.sender.nickname
+          user.synchronize command.sender
+          emit :message, user, channel, message
+        else
+          emit :private_message, command.sender.nickname, message
+        end
       end
 
 
