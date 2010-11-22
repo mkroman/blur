@@ -66,10 +66,15 @@ module Pulse
         callback.call *args
       end if @callbacks[name]
 
-      @scripts.each do |script|
-        if script.respond_to? name
-          script.__send__ name, *args
+
+      begin
+        @scripts.each do |script|
+          if script.respond_to? name
+            script.__send__ name, *args
+          end
         end
+      rescue
+        puts "Script error #$!"
       end
     end
 
