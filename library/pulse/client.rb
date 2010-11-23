@@ -53,6 +53,10 @@ module Pulse
       end
     end
 
+    def unload_scripts
+      @scripts.each &:unload!
+    end
+
     def each_user name
       @channels.values.select { |c| c.user? name }.each do |channel|
         yield channel.user name

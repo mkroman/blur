@@ -13,7 +13,13 @@ module Pulse
       # The /NAMES list
       def got_353 command
         users = command[3].split.map &User.method(:new)
-        @channels[command[2]] ||= Channel.new(command[2], self, users)
+
+        if channel = @channels[command[2]]
+          users.each &channel.users.method(:<<)
+          users.each { |user| user.channel = channel }
+        else
+          @channels[command[2]] ||= Channel.new(command[2], self, users)
+        end
         p users, command[3]
       end
 

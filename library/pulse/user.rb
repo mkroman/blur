@@ -9,9 +9,7 @@ module Pulse
     end
 
     def synchronize sender
-      @name = sender.nickname
-      @user = sender.username
-      @host = sender.hostname
+      @name, @user, @host = sender.nickname, sender.username, sender.hostname
     end
 
     def to_s; @name end
