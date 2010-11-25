@@ -9,11 +9,12 @@ module Pulse
     attr_accessor :scripts
 
     def initialize options
-      @scripts    = []
-      @channels   = {}
-      @settings   = Settings.new options
-      @callbacks  = {}
-      @connection = Connection.new self, @settings
+      @scripts       = []
+      @channels      = {}
+      @settings      = Settings.new options
+      @callbacks     = {}
+      @connection    = Connection.new self, @settings
+      @conversations = {}
 
       load_scripts
     end

@@ -10,6 +10,7 @@ require 'pulse/command'
 require 'pulse/settings'
 require 'pulse/connection'
 require 'pulse/enhancements'
+require 'pulse/conversation'
 
 Thread.abort_on_exception = true
 

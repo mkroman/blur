@@ -50,7 +50,12 @@ module Pulse
           user.synchronize command.sender
           emit :message, user, channel, message
         else
-          emit :private_message, command.sender.nickname, message
+          user = User.new command.sender.nickname
+
+          (@conversations[command.sender.nickname] ||= Conversation.new user, self).tap do |conversation|
+            user.channel = conversation
+            emit :conversation, user, conversation, message
+          end
         end
       end
 
