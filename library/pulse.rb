@@ -17,7 +17,7 @@ require 'pulse/script/cache'
 Thread.abort_on_exception = true
 
 module Pulse
-  class << Version = [1,1]
+  class << Version = [1,2]
     def to_s; join ?. end
   end
 
