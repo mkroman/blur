@@ -5,12 +5,45 @@ module Pulse
     class Cache
       def initialize script
         @script = script
+        @containers = {}
       end
+
+      def save
+        create_directory
+
+        File.open path, ?w do |file|
+          YAML.dump @containers, file
+        end
+
+        puts "Dumping cache for script #{@script.inspect} to #{path} …"
+      end
+
+      def load
+        if yaml = YAML.load_file(path)
+          @containers = yaml
+
+          puts "Imported cache from #{path} …"
+        end
+      rescue
+
+        puts "The cache is corrupt. Removing."
+        File.unlink path
+      end
+
+      def containers; @containers.keys end
+      def clear sure = false; @containers.clear if sure end
+
+      def [] key; @containers[key] ||= {} end
+      def []= key, value; @containers[key] ||= value end
 
     private
 
+      def create_directory
+        Dir.mkdir File.dirname path unless File.directory? File.dirname path
+      end
+
       def path
-        "#{File.expand_path $0}/cache/#{@script.name}_#@index"
+        "#{File.dirname File.expand_path $0}/cache/#{@script.name}.yml"
       end
     end
   end

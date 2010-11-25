@@ -13,6 +13,7 @@ module Pulse
     end
 
     def to_s; @name end
+    def to_yaml opts = {}; @name.to_yaml opts end
 
     def inspect
       %{#<#{self.class.name} @name=#{@name.inspect} @channel=#{@channel.name.inspect}>}

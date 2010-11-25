@@ -6,7 +6,7 @@ require 'pulse'
 
 Pulse.connect hostname: 'irc.maero.dk', nickname: 'pulse' do
   catch :connection_ready do
-    @connection.transmit :JOIN, '#maero'
+    @connection.transmit :JOIN, '#test'
   end
 
   catch :conversation do |user, conversation, line|

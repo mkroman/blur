@@ -20,7 +20,10 @@ module Pulse
     end
 
     def connect
-      trap 2 do; transmit :QUIT, "I was interrupted" end
+      trap 2 do
+        unload_scripts
+        transmit :QUIT, "I was interrupted" 
+      end
       @connection.establish
     end
 
