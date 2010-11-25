@@ -23,7 +23,6 @@ module Pulse
 
     def unload!
       cache.save if @cache
-      @client.scripts.delete self
       __send__ :unloaded if respond_to? :unloaded
     end
 

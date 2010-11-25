@@ -58,7 +58,9 @@ module Pulse
     end
 
     def unload_scripts
-      @scripts.each &:unload!
+      @scripts.each do |script|
+        script.unload!
+      end.clear
     end
 
     def each_user name
