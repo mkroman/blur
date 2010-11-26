@@ -6,8 +6,8 @@ module Pulse
   class DCC
     Duration = 150
 
-    def initialize path
-      @path = path
+    def initialize path, position = 0
+      @path, @position = path, 0
     end
 
     def listen
@@ -29,6 +29,7 @@ module Pulse
 
     def each_chunk
       File.open @path, ?r do |file|
+        file.readpartial @position if @position > 0
         yield file.readpartial 1024 until file.eof?
       end
     end

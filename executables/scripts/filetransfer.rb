@@ -6,4 +6,8 @@ Script :DCC do
       @client.send_file '/home/mk/Desktop/Scr000017.jpg', 'mk_'
     end
   end
+
+  def dcc_resume_file user, conversation, args
+    
+  end
 end

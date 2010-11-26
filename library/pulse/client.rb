@@ -80,6 +80,10 @@ module Pulse
       end
     end
 
+    def transmit name, *args
+      @connection.transmit name, *args
+    end
+
   private
 
     def emit name, *args
@@ -103,8 +107,5 @@ module Pulse
       (@callbacks[name] ||= []) << block
     end
 
-    def transmit name, *args
-      @connection.transmit name, *args
-    end
   end
 end

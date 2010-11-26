@@ -3,7 +3,7 @@
 
 Gem::Specification.new do |spec|
   spec.name    = "Pulse"
-  spec.version = "1.2.0"
+  spec.version = "1.2.1"
   spec.summary = "Extensible IRC library"
 
   spec.author  = "Mikkel Kroman"

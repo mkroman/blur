@@ -44,6 +44,7 @@ module Pulse
       # mk!mk@maero.dk PRIVMSG #maero :tp: kod
       def got_privmsg command
         name, message = command.params
+        return unless command.sender.respond_to? :nickname
 
         if channel = @channels[name]
           user = channel.user command.sender.nickname
@@ -55,8 +56,12 @@ module Pulse
           (@conversations[command.sender.nickname] ||= Conversation.new user, self).tap do |conversation|
             user.channel = conversation
 
-            if message.starts_with? "\x01DCC"
-              emit :DCC, user, conversation, message.split[1..-1]
+            if message =~ /^\x01DCC (.*?)\x01$/
+              if $1.starts_with? "RESUME"
+                emit :dcc_resume_file, user, conversation, $1.split
+              else
+                emit :dcc, user, conversation, $1.split
+              end
             else
               emit :conversation, user, conversation, message
             end
