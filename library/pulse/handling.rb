@@ -54,7 +54,12 @@ module Pulse
 
           (@conversations[command.sender.nickname] ||= Conversation.new user, self).tap do |conversation|
             user.channel = conversation
-            emit :conversation, user, conversation, message
+
+            if message.starts_with? "\x01DCC"
+              emit :DCC, user, conversation, message.split[1..-1]
+            else
+              emit :conversation, user, conversation, message
+            end
           end
         end
       end

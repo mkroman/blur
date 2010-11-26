@@ -2,6 +2,7 @@
 
 require 'yaml'
 require 'socket'
+require 'pulse/dcc'
 require 'pulse/user'
 require 'pulse/queue'
 require 'pulse/client'

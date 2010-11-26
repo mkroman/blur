@@ -10,6 +10,8 @@ module Pulse
 
     def establish
       TCPSocket.open @settings.hostname, @settings.port do |socket|
+        @socket = socket
+
         Thread.start socket, &@queue.method(:process)
         @delegate.connection_established self
 
@@ -19,6 +21,10 @@ module Pulse
       end
 
       @delegate.connection_terminated self
+    end
+
+    def close
+      @socket.close
     end
 
     def transmit name, *arguments

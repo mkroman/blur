@@ -22,6 +22,8 @@ module Pulse
     def connect
       trap 2 do
         unload_scripts
+        @connection.close
+        Thread.list.each &:kill
         transmit :QUIT, "I was interrupted" 
       end
       @connection.establish
@@ -66,6 +68,15 @@ module Pulse
     def each_user name
       @channels.values.select { |c| c.user? name }.each do |channel|
         yield channel.user name
+      end
+    end
+
+    def send_file path, recipient
+      Thread.new path, recipient do
+        DCC.new(path).listen do |addr|
+          # FIXME: find the right local ip address and convert it to an integer
+          transmit :PRIVMSG, recipient, "\x01DCC SEND #{File.basename path} 1489377357 #{addr[1]} #{File.size path}\x01"
+        end
       end
     end
 
