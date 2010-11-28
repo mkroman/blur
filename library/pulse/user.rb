@@ -5,7 +5,7 @@ module Pulse
     attr_accessor :name, :user, :host, :channel
 
     def initialize name
-      @name = name.sub /^\W/, ''
+      @name = name.sub /^\W\[\]/, ''
     end
 
     def synchronize sender
