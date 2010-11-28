@@ -24,9 +24,9 @@ module Pulse
 
           puts "Imported cache from #{path} …"
         end
-      rescue
 
-        puts "The cache is corrupt. Removing."
+      rescue
+        puts "The cache is corrupted. Removing."
         File.unlink path
       end
 
@@ -34,7 +34,7 @@ module Pulse
       def clear sure = false; @containers.clear if sure end
 
       def [] key; @containers[key] ||= {} end
-      def []= key, value; @containers[key] ||= value end
+      def []= key, value; @containers[key] = value end
 
     private
 

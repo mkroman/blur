@@ -17,15 +17,14 @@ module Pulse
       @conversations = {}
 
       load_scripts
+
+      trap 2 do
+        unload_scripts
+        transmit :QUIT, "I was interrupted" 
+      end
     end
 
     def connect
-      trap 2 do
-        unload_scripts
-        @connection.close
-        Thread.list.each &:kill
-        transmit :QUIT, "I was interrupted" 
-      end
       @connection.establish
     end
 

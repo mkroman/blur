@@ -32,9 +32,16 @@ module Pulse
       %{#<#{self.class.name} @name=#{@name.inspect} @version=#{@version.inspect} @author=#{@author.inspect}}
     end
 
+    def cache_for name
+      script = @client.scripts.find { |script| script.name == name }
+      script ? script.cache : nil
+    end
+
     def has_cache?
       File.exists? "#{File.expand_path File.dirname $0}/cache/#@name.yml"
     end
+
+    def cache; @cache ||= Cache.new self end
 
   private
 
@@ -44,6 +51,5 @@ module Pulse
       puts "Parse error: #{$!.message}"
     end
 
-    def cache; @cache ||= Cache.new self end
   end
 end

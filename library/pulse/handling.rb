@@ -57,11 +57,7 @@ module Pulse
             user.channel = conversation
 
             if message =~ /^\x01DCC (.*?)\x01$/
-              if $1.starts_with? "RESUME"
-                emit :dcc_resume_file, user, conversation, $1.split
-              else
-                emit :dcc, user, conversation, $1.split
-              end
+              emit :dcc, user, conversation, $1.split
             else
               emit :conversation, user, conversation, message
             end
