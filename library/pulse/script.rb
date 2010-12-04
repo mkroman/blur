@@ -37,6 +37,8 @@ module Pulse
       script ? script.cache : nil
     end
 
+    def script name; @client.scripts.find { |script| script.name == name } end
+
     def has_cache?
       File.exists? "#{File.expand_path File.dirname $0}/cache/#@name.yml"
     end
