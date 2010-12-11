@@ -3,7 +3,7 @@
 module Pulse
   class Script < Module
 
-    attr_accessor :name, :author, :version
+    attr_accessor :name, :author, :version, :path
 
     def initialize path, client
       @path, @client = path, client

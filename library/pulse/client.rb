@@ -91,14 +91,14 @@ module Pulse
       end if @callbacks[name]
 
 
-      begin
-        @scripts.each do |script|
+      @scripts.each do |script|
+        begin
           if script.respond_to? name
             script.__send__ name, *args
           end
+        rescue => exception
+          puts "Script error: #{exception.message} on line #{exception.line + 1} in #{script.path}"
         end
-      rescue
-        puts "Script error #$!"
       end
     end
 

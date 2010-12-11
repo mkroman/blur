@@ -24,7 +24,7 @@ module Pulse
 
   class << self
     def connect options, &block
-      puts "=> Pulse #{Pulse::Version}"
+      puts "=> Pulse #{Version}"
 
       Client.new(options).tap do |client|
         client.instance_eval &block
