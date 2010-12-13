@@ -68,7 +68,7 @@ module Pulse
           user.channel = channel
           user.synchronize command.sender
           channel.users << user
-          emit :user_joined, user, channel
+          emit :user_entered, user, channel
         end
       end
 
