@@ -4,6 +4,8 @@
 $:.unshift File.dirname(__FILE__) + '/../library'
 require 'pulse'
 
+Pulse::Queue::SleepDuration = 0
+
 Pulse.connect hostname: 'irc.metabox.it', nickname: 'pulse' do
   puts "=> Pulse #{Pulse::Version}"
 
@@ -12,6 +14,12 @@ Pulse.connect hostname: 'irc.metabox.it', nickname: 'pulse' do
     puts
 
     @connection.transmit :JOIN, '#maero'
+  end
+
+  catch :message do |user, channel, line|
+    if line.starts_with? '.test'
+      1000.times &channel.method(:say)
+    end
   end
 
   catch :user_joined do |user, channel|
