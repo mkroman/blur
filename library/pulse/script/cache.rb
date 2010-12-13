@@ -15,16 +15,13 @@ module Pulse
           YAML.dump @containers, file
         end
 
-        puts "Dumping cache for script #{@script.inspect} to #{path} …"
+        puts "Dumping cache for script #{@script.name} to #{path} …"
       end
 
       def load
-        if yaml = YAML.load_file(path)
-          @containers = yaml
-
-          puts "Imported cache from #{path} …"
+        if data = YAML.load_file(path)
+          puts "Imported cache from #{path} …" if @containers = data
         end
-
       rescue
         puts "The cache is corrupted. Removing."
         File.unlink path

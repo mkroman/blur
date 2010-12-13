@@ -3,21 +3,20 @@
 require 'yaml'
 require 'socket'
 
-Dir.glob("#{File.dirname __FILE__}/pulse/**/*.rb").each &method(:require)
 Thread.abort_on_exception = true
 
+Dir.glob("#{File.dirname __FILE__}/pulse/**/*.rb").each &method(:require)
+
 module Pulse
-  class << Version = [1,2]
+  class ConnectionError < StandardError; end
+
+  class << Version = [1,3]
     def to_s; join ?. end
   end
 
-  class << self
-    def connect options, &block
-      puts "=> Pulse #{Version}"
-
-      Client.new(options).tap do |client|
-        client.instance_eval &block
-      end.connect
-    end
+  def self.connect options, &block
+    Client.new(options).tap do |client|
+      client.instance_eval &block
+    end.connect
   end
 end

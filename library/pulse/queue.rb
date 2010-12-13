@@ -2,7 +2,6 @@
 
 module Pulse
   class Queue
-
     SleepDuration = 2
     Timelapse = 4
     Amount = 3

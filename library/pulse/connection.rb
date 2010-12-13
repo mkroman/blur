@@ -23,12 +23,22 @@ module Pulse
       @delegate.connection_terminated self
     end
 
-    def close
-      @socket.close
+    def transmit name, *arguments
+      if established?
+        Command.new(name, arguments).tap { |this| @queue << this }
+      else
+        raise ConnectionError, 'Connection has not been established'
+      end
     end
 
-    def transmit name, *arguments
-      Command.new(name, arguments).tap { |this| @queue << this }
+    def established?; not @socket.nil? and not @socket.closed? end
+
+    def close
+      if established?
+        @socket.close
+      else
+        raise ConnectionError, 'Connection is already closed'
+      end
     end
   end
 end

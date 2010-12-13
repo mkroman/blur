@@ -9,23 +9,21 @@ module Pulse
     attr_accessor :scripts
 
     def initialize options
-      @scripts       = []
-      @channels      = {}
-      @settings      = Settings.new options
-      @callbacks     = {}
-      @connection    = Connection.new self, @settings
-      @conversations = {}
+      @conversations, @callbacks, @channels, @scripts = {}, {}, {}, []
+
+      @settings   = Settings.new options
+      @connection = Connection.new self, @settings
 
       load_scripts
-
-      trap 2 do
-        unload_scripts
-        transmit :QUIT, "I was interrupted" 
-      end
+      trap 2, &method(:quit)
     end
 
     def connect
-      @connection.establish
+      if not @connection.established?
+        @connection.establish
+      else
+        raise ConnectionError, 'Connection has already been established'
+      end
     end
 
     def got_command command
@@ -48,10 +46,6 @@ module Pulse
       puts "The connection was terminated."
     end
 
-    def say recipient, line
-      transmit :PRIVMSG, recipient.to_s, line
-    end
-
     def load_scripts
       @settings.scripts.each do |path|
         @scripts.<< Script.new path, self
@@ -64,7 +58,7 @@ module Pulse
       end.clear
     end
 
-    def each_user name
+    def instances_of name
       @channels.values.select { |c| c.user? name }.each do |channel|
         yield channel.user name
       end
@@ -74,6 +68,20 @@ module Pulse
       @connection.transmit name, *args
     end
 
+    def say recipient, line
+      transmit :PRIVMSG, recipient.to_s, line
+    end
+
+    def join channel
+      transmit :JOIN, channel.to_s
+    end
+
+    def quit signal
+      unload_scripts
+
+      transmit :QUIT, "Received kill signal (#{signal})"
+    end
+
   private
 
     def emit name, *args
@@ -81,12 +89,9 @@ module Pulse
         callback.call *args
       end if @callbacks[name]
 
-
       @scripts.each do |script|
         begin
-          if script.respond_to? name
-            script.__send__ name, *args
-          end
+          script.__send__ name, *args if script.respond_to? name
         rescue => exception
           puts "Script error: #{exception.message} on line #{exception.line + 1} in #{script.path}"
         end
