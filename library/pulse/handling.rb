@@ -20,7 +20,6 @@ module Pulse
         else
           @channels[command[2]] ||= Channel.new(command[2], self, users)
         end
-        p users, command[3]
       end
 
       # The IRCd is checking whether or not we're still alive
@@ -56,11 +55,7 @@ module Pulse
           (@conversations[command.sender.nickname] ||= Conversation.new user, self).tap do |conversation|
             user.channel = conversation
 
-            if message =~ /^\x01DCC (.*?)\x01$/
-              emit :dcc, user, conversation, $1.split
-            else
-              emit :conversation, user, conversation, message
-            end
+            emit :conversation, user, conversation, message
           end
         end
       end
