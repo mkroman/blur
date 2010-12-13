@@ -2,18 +2,8 @@
 
 require 'yaml'
 require 'socket'
-require 'pulse/user'
-require 'pulse/queue'
-require 'pulse/client'
-require 'pulse/script'
-require 'pulse/channel'
-require 'pulse/command'
-require 'pulse/settings'
-require 'pulse/connection'
-require 'pulse/enhancements'
-require 'pulse/conversation'
-require 'pulse/script/cache'
 
+Dir.glob("#{File.dirname __FILE__}/pulse/**/*.rb").each &method(:require)
 Thread.abort_on_exception = true
 
 module Pulse
