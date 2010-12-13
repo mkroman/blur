@@ -28,8 +28,6 @@ module Pulse
           end
 
           @socket.write "#{command}\n"
-
-          puts ">> #{command}"
         else
           Thread.stop
         end

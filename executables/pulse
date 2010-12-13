@@ -8,10 +8,21 @@ Pulse.connect hostname: 'irc.metabox.it', nickname: 'pulse' do
   puts "=> Pulse #{Pulse::Version}"
 
   catch :connection_ready do
+    puts "Connection ready …"
+    puts
+
     @connection.transmit :JOIN, '#maero'
   end
 
-  catch :conversation do |user, conversation, line|
-    conversation.say "Conversation: #{conversation.inspect}"
+  catch :user_joined do |user, channel|
+    debug "#{user} has entered #{channel} …"
+  end
+
+  catch :user_left do |user, channel|
+    debug "#{user} has left #{channel} …"
+  end
+
+  def debug message
+    puts "#{Time.now.strftime "%H:%M:%S"} #{message}"
   end
 end

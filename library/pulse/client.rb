@@ -28,7 +28,6 @@ module Pulse
 
     def got_command command
       name = :"got_#{command.name.downcase}"
-      puts "<< #{command}"
 
       if respond_to? name
         __send__ name, command
@@ -36,14 +35,11 @@ module Pulse
     end
 
     def connection_established connection
-      puts "Connection has been established."
-
       transmit :NICK, @settings.nickname
       transmit :USER, @settings.username, ?*, ?*, @settings.realname
     end
 
     def connection_terminated connection
-      puts "The connection was terminated."
     end
 
     def load_scripts
