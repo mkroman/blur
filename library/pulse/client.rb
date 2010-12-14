@@ -6,7 +6,7 @@ module Pulse
   class Client
     include Handling
 
-    attr_accessor :scripts
+    attr_reader :channels, :callbacks, :conversations, :settings, :scripts
 
     def initialize options
       @conversations, @callbacks, @channels, @scripts = {}, {}, {}, []
