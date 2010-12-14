@@ -32,7 +32,7 @@ module Pulse
       # Someone has changed their nickname
       # mk!mk@maero.dk NICK mk_
       def got_nick command
-        each_user command.sender.nickname do |user|
+        each_instance_of command.sender.nickname do |user|
           emit :rename, user, command[0]
           user.name = command[0]
         end
