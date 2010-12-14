@@ -54,7 +54,7 @@ module Pulse
       end.clear
     end
 
-    def instances_of name
+    def each_instance_of name
       @channels.values.select { |c| c.user? name }.each do |channel|
         yield channel.user name
       end
