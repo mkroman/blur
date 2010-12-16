@@ -20,9 +20,3 @@ module Pulse
     end.connect
   end
 end
-
-def self.connect options, &block
-  client = Client.new(options)
-  client.instance_eval &block
-  client.connect
-end
