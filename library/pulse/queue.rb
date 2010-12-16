@@ -27,6 +27,7 @@ module Pulse
             @sleeping = false
           end
 
+          puts ">> #{command.inspect}"
           @socket.write "#{command}\n"
         else
           Thread.stop

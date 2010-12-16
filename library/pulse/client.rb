@@ -28,6 +28,7 @@ module Pulse
 
     def got_command command
       name = :"got_#{command.name.downcase}"
+      puts "<< #{command.inspect}"
 
       if respond_to? name
         __send__ name, command
@@ -35,6 +36,8 @@ module Pulse
     end
 
     def connection_established connection
+      p @settings.password
+      transmit :PASS, @settings.password if @settings.password?
       transmit :NICK, @settings.nickname
       transmit :USER, @settings.username, ?*, ?*, @settings.realname
     end
@@ -76,6 +79,7 @@ module Pulse
       unload_scripts
 
       transmit :QUIT, "Received kill signal (#{signal})"
+      @connection.close if @connection.established?
     end
 
   private

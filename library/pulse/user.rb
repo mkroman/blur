@@ -18,5 +18,7 @@ module Pulse
     def inspect
       %{#<#{self.class.name} @name=#{@name.inspect} @channel=#{@channel.name.inspect}>}
     end
+
+    alias_method :nickname, :name
   end
 end

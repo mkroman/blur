@@ -6,7 +6,7 @@ require 'pulse'
 
 Pulse::Queue::SleepDuration = 0
 
-Pulse.connect hostname: 'irc.metabox.it', nickname: 'pulse' do
+Pulse.connect hostname: 'irc.metabox.it', port: 6080, password: 'password', username: 'meta', nickname: 'pulse' do
   puts "=> Pulse #{Pulse::Version}"
 
   catch :connection_ready do

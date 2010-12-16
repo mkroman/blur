@@ -4,7 +4,7 @@ module Pulse
   class Settings < Hash
     class Error < StandardError; end
 
-    attr_accessor :nickname, :username, :realname, :hostname, :password
+    attr_accessor :nickname, :username, :realname, :hostname
 
     def initialize options = {}
       @options = options
