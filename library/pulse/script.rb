@@ -2,11 +2,10 @@
 
 module Pulse
   class Script < Module
-
     attr_accessor :name, :author, :version, :path
 
     def initialize path, client
-      @path, @client = path, client
+      @path, @client, @timers = path, client, []
       @loaded = false
 
       evaluate_script
@@ -45,11 +44,18 @@ module Pulse
 
     def cache; @cache ||= Cache.new self end
 
+    def timer options = {}, &block
+      Timer.new(options, &block).tap do |this|
+        @timers << this
+        this.start
+      end
+    end
+
   private
 
     def evaluate_script
       @loaded = true if module_eval File.read(@path), File.basename(@path), 0
-    rescue
+    rescue Exception
       puts "Parse error: #{$!.message}"
     end
 

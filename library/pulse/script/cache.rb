@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 module Pulse
-  class Script
+  class Script < Module
     class Cache
       def initialize script
         @script = script
@@ -24,6 +24,7 @@ module Pulse
         end
       rescue
         puts "The cache is corrupted. Removing."
+
         File.unlink path
       end
 
