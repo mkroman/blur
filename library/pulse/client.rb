@@ -19,10 +19,10 @@ module Pulse
     end
 
     def connect
-      if not @connection.established?
+      unless @connection.established?
         @connection.establish
       else
-        raise ConnectionError, 'Connection has already been established'
+        raise ConnectionError, "Connection has already been established"
       end
     end
 
@@ -36,7 +36,6 @@ module Pulse
     end
 
     def connection_established connection
-      p @settings.password
       transmit :PASS, @settings.password if @settings.password?
       transmit :NICK, @settings.nickname
       transmit :USER, @settings.username, ?*, ?*, @settings.realname

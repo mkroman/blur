@@ -10,7 +10,7 @@ Dir.glob("#{File.dirname __FILE__}/pulse/**/*.rb").each &method(:require)
 module Pulse
   class ConnectionError < StandardError; end
 
-  class << Version = [1,3]
+  class << Version = [2,0]
     def to_s; join ?. end
   end
 

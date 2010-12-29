@@ -27,7 +27,7 @@ module Pulse
       if established?
         Command.new(name, arguments).tap { |this| @queue << this }
       else
-        raise ConnectionError, 'Connection has not been established'
+        raise ConnectionError, "Connection has not been established"
       end
     end
 
@@ -37,7 +37,7 @@ module Pulse
       if established?
         @socket.close
       else
-        raise ConnectionError, 'Connection is already closed'
+        raise ConnectionError, "Connection is already closed"
       end
     end
   end
