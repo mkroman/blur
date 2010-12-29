@@ -8,10 +8,8 @@ Thread.abort_on_exception = true
 Dir.glob("#{File.dirname __FILE__}/pulse/**/*.rb").each &method(:require)
 
 module Pulse
-  class ConnectionError < StandardError; end
-
   class << Version = [2,0]
-    def to_s; join ?. end
+    def to_s; join '.' end
   end
 
   def self.connect options, &block

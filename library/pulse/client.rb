@@ -5,7 +5,6 @@ require 'pulse/handling'
 module Pulse
   class Client
     include Handling
-
     attr_reader :channels, :callbacks, :conversations, :settings, :scripts
 
     def initialize options
@@ -14,15 +13,27 @@ module Pulse
       @settings   = Settings.new options
       @connection = Connection.new self, @settings
 
+      @networks = []
+
+      unless options[:networks]
+        raise "No networks given to the options hash", ArgumentError
+      else
+        options[:networks].each do |host|
+          @networks.<< Network.for host
+        end
+      end
+
       load_scripts
       trap 2, &method(:quit)
     end
 
     def connect
-      unless @connection.established?
-        @connection.establish
+      networks = @networks.select { |network| not network.connected? }
+
+      if networks.any?
+        networks.each &:connect
       else
-        raise ConnectionError, "Connection has already been established"
+        raise Network::ConnectionError, "Connection has already been established"
       end
     end
 
@@ -77,7 +88,7 @@ module Pulse
     def quit signal
       unload_scripts
 
-      transmit :QUIT, "Received kill signal (#{signal})"
+      transmit :QUIT, "Received kill signal (#{Signal.list.invert[signal]})"
       @connection.close if @connection.established?
     end
 
@@ -91,7 +102,7 @@ module Pulse
       @scripts.each do |script|
         begin
           script.__send__ name, *args if script.respond_to? name
-        rescue => exception
+        rescue Exception => exception
           puts "Script error: #{exception.message} on line #{exception.line + 1} in #{script.path}"
         end
       end

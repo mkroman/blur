@@ -4,9 +4,12 @@
 $:.unshift File.dirname(__FILE__) + '/../library'
 require 'pulse'
 
-Pulse::Queue::SleepDuration = 0
+options = {
+  nickname: "meta",
+  networks: ["irc.maero.dk:6667", "irc.maero.dk:6668"]
+}
 
-Pulse.connect hostname: 'irc.metabox.it', port: 6080, password: 'password', username: 'meta', nickname: 'pulse' do
+Pulse.connect options do
   puts "=> Pulse #{Pulse::Version}"
 
   catch :connection_ready do
