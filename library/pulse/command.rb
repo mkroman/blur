@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-require 'ostruct'
-
 module Pulse
   class Command
     attr_accessor :name, :params, :prefix

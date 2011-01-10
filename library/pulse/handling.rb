@@ -15,7 +15,7 @@ module Pulse
         users = command[3].split.map &User.method(:new)
 
         if channel = @channels[command[2]]
-          users.each &channel.users.method(:<<)
+          channel.users.push *users
           users.each { |user| user.channel = channel }
         else
           @channels[command[2]] ||= Channel.new(command[2], self, users)

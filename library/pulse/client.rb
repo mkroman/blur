@@ -7,13 +7,15 @@ module Pulse
     include Handling
     attr_reader :channels, :callbacks, :conversations, :settings, :scripts
 
+    def connected?
+      @networks.select { |network| network.connected? }.any?
+    end
+
     def initialize options
       @conversations, @callbacks, @channels, @scripts = {}, {}, {}, []
 
-      @settings   = Settings.new options
-      @connection = Connection.new self, @settings
-
       @networks = []
+      @settings = Settings.new options
 
       unless options[:networks]
         raise "No networks given to the options hash", ArgumentError
@@ -25,6 +27,7 @@ module Pulse
 
       load_scripts
       trap 2, &method(:quit)
+      main_loop
     end
 
     def connect
@@ -53,6 +56,14 @@ module Pulse
     end
 
     def connection_terminated connection
+    end
+
+    def main_loop
+      networks = @networks.select { |network| network.connected? }
+
+      loop do
+        networks.each &:read
+      end
     end
 
     def load_scripts

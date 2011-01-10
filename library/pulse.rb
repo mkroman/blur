@@ -2,6 +2,7 @@
 
 require 'yaml'
 require 'socket'
+require 'ostruct'
 
 Thread.abort_on_exception = true
 
