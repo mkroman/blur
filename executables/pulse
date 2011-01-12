@@ -6,10 +6,9 @@ require 'pulse'
 
 options = {
   nickname: "meta",
-  networks: ["irc.maero.dk:6667", "irc.maero.dk:6668"]
+  networks: %w{uplink.io:6667 uplink.io:6668}
 }
 
 Pulse.connect options do
   puts "=> Pulse #{Pulse::Version}"
-
 end

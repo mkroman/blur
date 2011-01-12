@@ -1,8 +1,12 @@
 # encoding: utf-8
 
+require 'pulse/handling'
+
 module Pulse
   class Client
-    def connected?; @networks.select(&:connected?).any? end
+    include Handling
+
+    attr_accessor :options, :networks
 
     def initialize options
       @options  = options
@@ -10,7 +14,6 @@ module Pulse
 
       @options[:networks].each do |network|
         host, port = network.split ?:
-
         @networks.<< Network.new host, (port.to_i or 6667)
       end
     end
@@ -26,13 +29,18 @@ module Pulse
       run_loop
     end
 
+    def got_command network, command
+      puts "<< #{network}: #{command}"
+    end
+
   private
     
     def run_loop
       puts "Starting run loop …"
+      pp @networks
 
-      while connected?
-        @networks.select(&:connected?).each &:transcieve
+      while (networks = @networks.select(&:connected?)).any?
+        networks.each &:transcieve
       end
 
       puts "Finished run loop …"
