@@ -4,12 +4,10 @@ require 'yaml'
 require 'socket'
 require 'ostruct'
 
-Thread.abort_on_exception = true
-
 Dir.glob("#{File.dirname __FILE__}/pulse/**/*.rb").each &method(:require)
 
 module Pulse
-  class << Version = [2,0]
+  class << Version = [1,4]
     def to_s; join '.' end
   end
 

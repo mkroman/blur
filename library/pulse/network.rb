@@ -4,16 +4,9 @@ module Pulse
   class Network
     class ConnectionError < StandardError; end
 
-    attr_accessor :host, :port
+    attr_accessor :host, :port, :secure, :delegate
 
-    def to_s; "#@host:#@port" end
-    def secure?; @secure == true end
-    def connected?; @connection.established? end
-
-    def self.for string
-      host, port = string.split ?:
-      new host, port || 6667, false
-    end
+    def connected?; false end
 
     def initialize host, port = 6667, secure = false
       @host, @port, @secure = host, port, secure
@@ -22,7 +15,11 @@ module Pulse
     end
 
     def connect
-      @connection.establish unless connected?
+      puts "Connecting to #{self} …"
+    end
+
+    def transcieve
+      puts "Transcieving data for #{self} …"
     end
   end
 end

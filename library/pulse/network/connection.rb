@@ -1,24 +1,20 @@
 # encoding: utf-8
 
 module Pulse
-  class Network
+  class Network 
     class Connection
-      attr_accessor :network
+      def connected?; not @socket.nil? and not @socket.closed? end
 
-      def established?; @socket.nil? ? nil : !@socket.closed? end
-
-      def initialize network = nil
-        @network = network
+      def initialize network
+        @network, @buffer = network, ''
       end
 
-      def establish
-        unless established?
-          puts "Connecting to #@network …"
+      def connect
+        @socket = TCPSocket.new @network.host, @network.port
+      end
 
-          @socket = TCPSocket.new @network.host, @network.port
-        else
-          raise ConnectionError, "Connection has already been established"
-        end
+      def transcieve
+        @buffer.<< @socket.read_nonblock 512
       end
     end
   end

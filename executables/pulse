@@ -12,28 +12,4 @@ options = {
 Pulse.connect options do
   puts "=> Pulse #{Pulse::Version}"
 
-  catch :connection_ready do
-    puts "Connection ready …"
-    puts
-
-    @connection.transmit :JOIN, '#maero'
-  end
-
-  catch :message do |user, channel, line|
-    if line.starts_with? '.test'
-      1000.times &channel.method(:say)
-    end
-  end
-
-  catch :user_joined do |user, channel|
-    debug "#{user} has entered #{channel} …"
-  end
-
-  catch :user_left do |user, channel|
-    debug "#{user} has left #{channel} …"
-  end
-
-  def debug message
-    puts "#{Time.now.strftime "%H:%M:%S"} #{message}"
-  end
 end
