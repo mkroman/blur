@@ -4,12 +4,14 @@ module Pulse
   class Client
     module Handling
 
-    protected 
+    protected
+    
       # End of MOTD
       def got_end_of_motd network, command
-        emit :connection_ready, @connection
+        emit :connection_ready, network
       end
-
+      
+=begin
       # The /NAMES list
       def got_353 network, command
         users = command[3].split.map &User.method(:new)
@@ -21,14 +23,16 @@ module Pulse
           @channels[command[2]] ||= Channel.new(command[2], self, users)
         end
       end
+=end
 
       # The IRCd is checking whether or not we're still alive
       # PING :1285409133
       # PONG :1285409133
       def got_ping network, command
-        transmit :PONG, command[0]
+        network.transmit :PONG, command[0]
       end
 
+=begin
       # Someone has changed their nickname
       # mk!mk@maero.dk NICK mk_
       def got_nick network, command
@@ -37,7 +41,9 @@ module Pulse
           user.name = command[0]
         end
       end
+=end
 
+=begin
       # Someone has sent a message, it can be both a private message and
       # a channel message
       # mk!mk@maero.dk PRIVMSG #maero :tp: kod
@@ -80,6 +86,7 @@ module Pulse
           emit :user_left, user, channel
         end
       end
+=end
 
       alias_method :got_422, :got_end_of_motd
       alias_method :got_376, :got_end_of_motd

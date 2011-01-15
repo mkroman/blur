@@ -6,9 +6,13 @@ require 'pulse'
 
 options = {
   nickname: "meta",
-  networks: %w{irc.dk.quakenet.org irc.dk.quakenet.org irc.dk.quakenet.org}
+  networks: %w{uplink.io}
 }
 
 Pulse.connect options do
   puts "=> Pulse #{Pulse::Version}"
+  
+  catch :connection_ready do |network|
+    network.transmit :JOIN, "#uplink"
+  end
 end

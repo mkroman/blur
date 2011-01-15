@@ -4,7 +4,7 @@ module Pulse
   class Network
     class ConnectionError < StandardError; end
 
-    attr_accessor :host, :port, :secure, :delegate
+    attr_accessor :host, :port, :secure, :delegate, :connection
 
     def connected?; @connection.established? end
 
@@ -26,13 +26,10 @@ module Pulse
     end
 
     def transmit name, *arguments
-      if connected?
-        @connection.transmit Command.new name, arguments
-      else
-        raise ConnectionError, "Connection has not been established"
-      end
+      @connection.transmit Command.new name, arguments
     end
 
+    def to_s; "#<#{self.class.name}: #{@host}:#{@port}>" end
     def transcieve; @connection.transcieve end
     def got_command command; @delegate.got_command self, command end
   end

@@ -17,7 +17,7 @@ module Pulse
       def transmit command; @queue << command end
 
       def transcieve
-        readable, writable = IO.select [@socket]
+        readable, writable = IO.select [@socket], [@socket]
 
         readable.each do |socket|
           @buffer.<< socket.read_nonblock 512
@@ -29,9 +29,12 @@ module Pulse
           end
         end
 
-        while command = @queue.shift
-          @socket.write_nonblock "#{command}\n"
+        writable.each do |socket|
+          while command = @queue.shift
+            socket.write_nonblock "#{command}\n"
+          end
         end
+        
       end
     end
   end

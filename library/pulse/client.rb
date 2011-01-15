@@ -9,8 +9,9 @@ module Pulse
     attr_accessor :options, :networks
 
     def initialize options
-      @options  = options
-      @networks = []
+      @options   = options
+      @networks  = []
+      @callbacks = {}
 
       @options[:networks].each do |network|
         host, port = network.split ?:
@@ -30,15 +31,12 @@ module Pulse
     end
 
     def got_command network, command
-      puts "#{command.name.inspect}"
-
-      if command.name == "376" or command.name == "422"
-        network.transmit :JOIN, "#warsow.na"
-      elsif command.name == "PING"
-        network.transmit :PONG, command[0]
+      puts "<- \e[1m#{network}\e[0m | #{command}"
+      name = :"got_#{command.name.downcase}"
+      
+      if respond_to? name
+        __send__ name, network, command
       end
-
-      puts "<< #{network}: #{command}"
     end
 
   private
@@ -57,5 +55,16 @@ module Pulse
 
       puts "Finished run loop …"
     end
+    
+    def emit name, *args
+      @callbacks[name].each do |callback|
+        callback.call *args
+      end if @callbacks[name]
+    end
+    
+    def catch name, &block
+      (@callbacks[name] ||= []) << block
+    end
+    
   end
 end
