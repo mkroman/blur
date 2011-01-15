@@ -6,7 +6,7 @@ require 'pulse'
 
 options = {
   nickname: "meta",
-  networks: %w{uplink.io:6667 uplink.io:6668}
+  networks: %w{irc.dk.quakenet.org irc.dk.quakenet.org irc.dk.quakenet.org}
 }
 
 Pulse.connect options do

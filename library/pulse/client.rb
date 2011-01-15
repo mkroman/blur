@@ -14,7 +14,7 @@ module Pulse
 
       @options[:networks].each do |network|
         host, port = network.split ?:
-        @networks.<< Network.new host, (port.to_i or 6667)
+        @networks.<< Network.new host, (port ? port.to_i : 6667)
       end
     end
 
@@ -30,6 +30,14 @@ module Pulse
     end
 
     def got_command network, command
+      puts "#{command.name.inspect}"
+
+      if command.name == "376" or command.name == "422"
+        network.transmit :JOIN, "#warsow.na"
+      elsif command.name == "PING"
+        network.transmit :PONG, command[0]
+      end
+
       puts "<< #{network}: #{command}"
     end
 
@@ -39,8 +47,12 @@ module Pulse
       puts "Starting run loop …"
       pp @networks
 
-      while (networks = @networks.select(&:connected?)).any?
-        networks.each &:transcieve
+      begin
+        while (networks = @networks.select(&:connected?)).any?
+          networks.each &:transcieve
+        end
+      rescue Errno::ECONNRESET
+        puts "Connection reset .."
       end
 
       puts "Finished run loop …"
