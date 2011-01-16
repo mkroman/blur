@@ -2,8 +2,8 @@
 # encoding: utf-8
 
 Gem::Specification.new do |spec|
-  spec.name    = "Pulse"
-  spec.version = "1.3.2"
+  spec.name    = "Blur"
+  spec.version = "1.4"
   spec.summary = "Extensible IRC library"
 
   spec.author  = "Mikkel Kroman"

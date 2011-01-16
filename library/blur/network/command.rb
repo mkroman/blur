@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-module Pulse
+module Blur
   class Network
     class Command
       attr_accessor :name, :params, :prefix

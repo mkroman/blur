@@ -1,8 +1,8 @@
 # encoding: utf-8
 
-require 'pulse/handling'
+require 'blur/handling'
 
-module Pulse
+module Blur
   class Client
     include Handling
 
@@ -46,11 +46,9 @@ module Pulse
       pp @networks
 
       begin
-        while (networks = @networks.select(&:connected?)).any?
-          networks.each &:transcieve
-        end
-      rescue Errno::ECONNRESET
-        puts "Connection reset .."
+        loop { @networks.each &:transcieve; sleep 0.05 }
+      rescue Exception => exception
+        puts "WTF @ #{exception}"
       end
 
       puts "Finished run loop …"

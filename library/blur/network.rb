@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-module Pulse
+module Blur
   class Network
     class ConnectionError < StandardError; end
 
@@ -10,7 +10,6 @@ module Pulse
 
     def initialize host, port = 6667, secure = false
       @host, @port, @secure = host, port, secure
-
       @channels = []
 
       @connection = Connection.new self
@@ -26,7 +25,10 @@ module Pulse
     end
 
     def transmit name, *arguments
-      @connection.transmit Command.new name, arguments
+      command = Command.new name, arguments
+      puts "-> \e[1m#{self}\e[0m | #{command}"
+
+      @connection.transmit command
     end
 
     def to_s; "#<#{self.class.name}: #{@host}:#{@port}>" end

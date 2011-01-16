@@ -5,9 +5,9 @@ require 'yaml'
 require 'socket'
 require 'ostruct'
 
-Dir.glob("#{File.dirname __FILE__}/pulse/**/*.rb").each &method(:require)
+Dir.glob("#{File.dirname __FILE__}/blur/**/*.rb").each &method(:require)
 
-module Pulse
+module Blur
   class << Version = [1,4]
     def to_s; join '.' end
   end

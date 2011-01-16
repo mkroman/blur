@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-module Pulse
+module Blur
   class Client
     module Handling
 

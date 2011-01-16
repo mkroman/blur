@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+$:.unshift File.dirname(__FILE__) + '/../library'
+require 'blur'
+
+options = {
+  nickname: "meta",
+  networks: %w{uplink.io uplink.io uplink.io}
+}
+
+Blur.connect options do
+  puts "==> Blur #{Blur::Version}"
+  
+  catch :connection_ready do |network|
+    network.transmit :JOIN, "#uplink"
+    network.transmit :PRIVMSG, "#uplink", "Hi, I'm pleased to meet you, I'm what they call Blur #{Blur::Version} …"
+  end
+end
