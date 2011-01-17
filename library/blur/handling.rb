@@ -9,21 +9,26 @@ module Blur
       # End of MOTD
       def got_end_of_motd network, command
         emit :connection_ready, network
-      end
-      
-=begin
-      # The /NAMES list
-      def got_353 network, command
-        users = command[3].split.map &User.method(:new)
-
-        if channel = @channels[command[2]]
-          users.each &channel.users.method(:<<)
-          users.each { |user| user.channel = channel }
-        else
-          @channels[command[2]] ||= Channel.new(command[2], self, users)
+        
+        network.options[:channels].each do |channel|
+          network.transmit :JOIN, channel
         end
       end
-=end
+      
+      # The /NAMES list
+      def got_353 network, command
+        name  = command[2]
+        users = command[3].split.map &Network::User.method(:new)
+        
+        if channel = network.channel_by_name(name)
+          users.each do |user|
+            user.channel = channel   
+            channel.users << user
+          end
+        else
+          network.channels.<< Network::Channel.new name, network, users
+        end
+      end
 
       # The IRCd is checking whether or not we're still alive
       # PING :1285409133
@@ -42,6 +47,20 @@ module Blur
         end
       end
 =end
+
+      def got_privmsg network, command
+        return if command.sender.is_a? String # Ignore all server privmsgs
+        
+        name, message = command.params
+        
+        if channel = network.channel_by_name(name)
+          if user = channel.user_by_nick(command.sender.nickname)
+            emit :message, user, channel, message
+          else
+            # Odd… this shouldn't happen
+          end
+        end
+      end
 
 =begin
       # Someone has sent a message, it can be both a private message and

@@ -17,11 +17,11 @@ module Blur
         end
       end
 
+      def [] index; @params[index] end
+
       def initialize name, params = []
         @name, @params = name, params
       end
-
-      def [] index; @params[index] end
 
       def sender
         return @sender if @sender

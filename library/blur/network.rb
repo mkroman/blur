@@ -3,36 +3,65 @@
 module Blur
   class Network
     class ConnectionError < StandardError; end
-
-    attr_accessor :host, :port, :secure, :delegate, :connection
+    attr_accessor :options, :channels, :delegate, :connection
 
     def connected?; @connection.established? end
+    
+    def host; @options[:hostname] end
+    def port; @options[:port] ||= (@options[:secure] == true) ? 6697 : 6667 end
 
-    def initialize host, port = 6667, secure = false
-      @host, @port, @secure = host, port, secure
-      @channels = []
+    def initialize options = {}
+      @options = options
+      
+      unless options[:nickname]
+        raise ArgumentError, "nickname is missing from the network's option block"
+      end
+      
+      @options[:username] ||= @options[:nickname]
+      @options[:realname] ||= @options[:username]
+      @options[:channels] ||= []
 
-      @connection = Connection.new self
+      @channels   = []
+      @connection = Connection.new self, host, port
+    end
+    
+    def say recipient, message
+      transmit :PRIVMSG, recipient, message
+    end
+    
+    def got_command command
+      @delegate.got_command self, command
+    end
+    
+    def channel_by_name name
+      @channels.find { |channel| channel.name == name }
     end
 
     def connect
-      puts "Connecting to #{self} …"
-
       @connection.establish
-
-      transmit :NICK, "test#{rand 9999999999}"
-      transmit :USER, :test_bot, ?*, ?*, "ddddddd d"
+      
+      transmit :PASS, @options[:password] if @options[:password]
+      transmit :NICK, @options[:nickname]
+      transmit :USER, @options[:username], :void, :void, @options[:realname]
     end
-
+    
+    def disconnect
+      @connection.terminate
+    end
+    
     def transmit name, *arguments
       command = Command.new name, arguments
       puts "-> \e[1m#{self}\e[0m | #{command}"
-
+      
       @connection.transmit command
     end
-
-    def to_s; "#<#{self.class.name}: #{@host}:#{@port}>" end
-    def transcieve; @connection.transcieve end
-    def got_command command; @delegate.got_command self, command end
+    
+    def transcieve
+      @connection.transcieve
+    end
+    
+    def to_s
+      %{#<#{self.class.name} "#{host}:#{port}">}
+    end
   end
 end
