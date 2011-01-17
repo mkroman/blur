@@ -2,7 +2,7 @@
 
 module Blur
   class Script < Module
-    attr_accessor :name, :author, :version, :client
+    attr_accessor :name, :author, :version, :path, :client
     
     def evaluated?; @evaluated end
     

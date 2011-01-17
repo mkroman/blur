@@ -9,6 +9,10 @@ module Blur
         @nick = nick.sub /^[@|~|\+|%|&]/, ''
       end
       
+      def say message
+        @channel.network.say self, message
+      end
+      
       def inspect
         %{#<#{self.class.name} @nick=#{@nick.inspect} @channel=#{@channel.name.inspect}>}
       end

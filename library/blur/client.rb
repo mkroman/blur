@@ -79,7 +79,7 @@ module Blur
             network.transcieve
             sleep 0.05
           rescue StandardError => exception
-            puts "#{network} threw an exception: #{exception.class.name} #{exception.message} #{exception.backtrace.to_s}"
+            puts "\e[1m\e[31merror:\e[39m #{exception.message}\e[0m"
             
             network.disconnect if network.connected?
             @networks.delete network
@@ -94,6 +94,14 @@ module Blur
       @callbacks[name].each do |callback|
         callback.call *args
       end if @callbacks[name]
+      
+      @scripts.each do |script|
+        begin
+          script.__send__ name, *args if script.respond_to? name
+        rescue Exception => exception
+          puts "\e[1m#{File.basename script.path}:#{exception.line + 1}: \e[31merror:\e[39m #{exception.message}\e[0m"
+        end
+      end
     end
     
     def catch name, &block

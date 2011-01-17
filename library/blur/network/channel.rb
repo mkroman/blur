@@ -3,7 +3,7 @@
 module Blur
   class Network
     class Channel
-      attr_accessor :name, :users
+      attr_accessor :name, :users, :network
 
       def initialize name, network = nil, users = []
         @name    = name
