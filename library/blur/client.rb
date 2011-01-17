@@ -12,10 +12,13 @@ module Blur
       @options   = options
       @networks  = []
       @callbacks = {}
+      @connected = true
       
       @options[:networks].each do |options|
         @networks.<< Network.new options
       end
+      
+      trap 2, &method(:quit)
     end
     
     def connect
@@ -38,18 +41,31 @@ module Blur
       end
     end
     
+    def quit signal
+      @networks.each do |network|
+        network.transmit :QUIT, "Got SIGINT?"
+        network.transcieve
+        network.disconnect
+      end
+      
+      @connected = false
+      
+      exit 0
+    end
+    
   private
     
     def run_loop
       puts "Starting run loop ..."
       
-      loop do
+      while @connected
         @networks.each do |network|
           begin
             network.transcieve
             sleep 0.05
-          rescue Exception => exception
+          rescue StandardError => exception
             puts "#{network} threw an exception: #{exception.class.name} #{exception.message} #{exception.backtrace.to_s}"
+            
             network.disconnect if network.connected?
             @networks.delete network
           end

@@ -29,25 +29,27 @@ module Blur
           network.channels.<< Network::Channel.new name, network, users
         end
       end
-
-      # The IRCd is checking whether or not we're still alive
-      # PING :1285409133
-      # PONG :1285409133
+      
+      # Are we still breathing?
       def got_ping network, command
         network.transmit :PONG, command[0]
       end
-
-=begin
-      # Someone has changed their nickname
-      # mk!mk@maero.dk NICK mk_
+      
+      # Someone changed their nickname
       def got_nick network, command
-        each_instance_of command.sender.nickname do |user|
-          emit :rename, user, command[0]
-          user.name = command[0]
+        nick = command.sender.nickname
+        
+        if channels = network.channels_with_user(nick)
+          channels.each do |channel|
+            if user = channel.user_by_nick(nick)
+              emit :user_rename, channel, user, command[0]
+              user.nick = command[0]
+            end
+          end
         end
       end
-=end
-
+      
+      # Someone send a message
       def got_privmsg network, command
         return if command.sender.is_a? String # Ignore all server privmsgs
         
@@ -62,6 +64,7 @@ module Blur
         end
       end
       
+      # Someone joined a channel
       def got_join network, command
         name = command[0]
         user = Network::User.new command.sender.nickname
@@ -76,6 +79,7 @@ module Blur
         end
       end
       
+      # Someone left a channel
       def got_part network, command
         name = command[0]
         
@@ -88,6 +92,7 @@ module Blur
         end
       end
       
+      # Someone quit irc
       def got_quit network, command
         nick = command.sender.nickname
         

@@ -11,11 +11,11 @@ options = {
       nickname: "meta-uplink",
       channels: %w{#uplink}
     },
-#    {
-#      hostname: "irc.dk.quakenet.org",
-#      nickname: "meta-qnet",
-#      channels: %w{#warsow.na}
-#    }
+    {
+      hostname: "irc.dk.quakenet.org",
+      nickname: "meta-qnet",
+      channels: %w{#warsow.na}
+    }
   ]
 }
 
