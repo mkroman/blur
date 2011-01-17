@@ -36,6 +36,10 @@ module Blur
     def channel_by_name name
       @channels.find { |channel| channel.name == name }
     end
+    
+    def channels_with_user nick
+      @channels.select { |channel| channel.user_by_nick nick }
+    end
 
     def connect
       @connection.establish

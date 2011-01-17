@@ -27,6 +27,16 @@ Blur.connect options do
   end
   
   catch :message do |user, channel, line|
-    channel.say "#{user} said #{line}"
+    if line == "do you know me?"
+      if _user = channel.user_by_nick(user.nick)
+        channel.say "yes, you're #{user}"
+      else
+        channel.say "no"
+      end
+    end
+  end
+  
+  catch :user_quit do |channel, user|
+    channel.say "goodbye, #{user}"
   end
 end

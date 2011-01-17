@@ -61,51 +61,46 @@ module Blur
           end
         end
       end
-
-=begin
-      # Someone has sent a message, it can be both a private message and
-      # a channel message
-      # mk!mk@maero.dk PRIVMSG #maero :tp: kod
-      def got_privmsg network, command
-        name, message = command.params
-        return unless command.sender.respond_to? :nickname
-
-        if channel = @channels[name]
-          user = channel.user command.sender.nickname
-          user.synchronize command.sender
-          emit :message, user, channel, message
-        else
-          user = User.new command.sender.nickname
-
-          (@conversations[command.sender.nickname] ||= Conversation.new user, self).tap do |conversation|
-            user.channel = conversation
-
-            emit :conversation, user, conversation, message
+      
+      def got_join network, command
+        name = command[0]
+        user = Network::User.new command.sender.nickname
+        
+        if channel = network.channel_by_name(name)
+          user.name = command.sender.username
+          user.host = command.sender.hostname
+          
+          channel.users << user
+          
+          emit :user_entered, channel, user
+        end
+      end
+      
+      def got_part network, command
+        name = command[0]
+        
+        if channel = network.channel_by_name(name)
+          if user = channel.user_by_nick(command.sender.nickname)
+            channel.users.delete user
+            
+            emit :user_left, channel, user
           end
         end
       end
-
-
-      # Someone has entered a channel.
-      def got_join network, command
-        if channel = @channels[command[0]]
-          user = User.new command.sender.nickname
-          user.channel = channel
-          user.synchronize command.sender
-          channel.users << user
-          emit :user_entered, user, channel
+      
+      def got_quit network, command
+        nick = command.sender.nickname
+        
+        if channels = network.channels_with_user(nick)
+          channels.each do |channel|
+            if user = channel.user_by_nick(nick)
+              channel.users.delete user 
+            
+              emit :user_quit, channel, user
+            end
+          end
         end
       end
-
-      # Someone has left a channel.
-      def got_part network, command
-        if channel = @channels[command[0]]
-          user = channel.user command.sender.nickname
-          channel.users.delete user
-          emit :user_left, user, channel
-        end
-      end
-=end
 
       alias_method :got_422, :got_end_of_motd
       alias_method :got_376, :got_end_of_motd

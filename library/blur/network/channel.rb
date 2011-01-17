@@ -20,10 +20,6 @@ module Blur
       def user_by_nick nick
         @users.find { |user| user.nick == nick }
       end
-      
-      def has_user? name
-        not user_by_name(name).nil?
-      end
 
       def inspect
         %{#<#{self.class.name} @name=#{@name.inspect} @users=#{@users.inspect}}
