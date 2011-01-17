@@ -10,6 +10,7 @@ module Blur
     
     def initialize options
       @options   = options
+      @scripts   = []
       @networks  = []
       @callbacks = {}
       @connected = true
@@ -18,6 +19,7 @@ module Blur
         @networks.<< Network.new options
       end
       
+      load_scripts
       trap 2, &method(:quit)
     end
     
@@ -38,6 +40,19 @@ module Blur
       
       if respond_to? name
         __send__ name, network, command
+      end
+    end
+    
+    def load_scripts
+      script_path = File.dirname($0)
+      
+      Dir.glob("#{script_path}/scripts/*.rb").each do |path|
+        puts "Evaluating #{path} ..."
+        
+        script = Script.new path
+        script.client = self
+        
+        @scripts << script
       end
     end
     

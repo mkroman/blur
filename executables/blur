@@ -8,14 +8,16 @@ options = {
   networks: [
     {
       hostname: "uplink.io",
-      nickname: "meta-uplink",
+      nickname: "meta-test",
       channels: %w{#uplink}
     },
+=begin
     {
       hostname: "irc.dk.quakenet.org",
       nickname: "meta-qnet",
       channels: %w{#warsow.na}
     }
+=end
   ]
 }
 
