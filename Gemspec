@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 Gem::Specification.new do |spec|
-  spec.name    = "Blur"
+  spec.name    = "blur"
   spec.version = "1.4"
   spec.summary = "Extensible IRC library"
 
