@@ -11,6 +11,8 @@ module Blur
       @evaluated = false
       
       if evaluate and @evaluated
+        cache.load if Cache.exists? @name
+        
         __send__ :loaded if respond_to? :loaded
       end
     end
@@ -21,6 +23,18 @@ module Blur
       @version = version
       
       instance_eval &block
+      
+      true
+    end
+    
+    def unload
+      @cache.save if @cache
+      
+      __send__ :unloaded if respond_to? :unloaded
+    end
+    
+    def cache
+      @cache ||= Cache.new self
     end
     
     def inspect
@@ -30,13 +44,11 @@ module Blur
   private
   
     def evaluate
-      begin
-        if module_eval File.read(@path), File.basename(@path), 0
-          @evaluated = true
-        end
-      rescue Exception => exception
-        puts "\e[1m#{File.basename @path}:#{exception.line + 1}: \e[31merror:\e[39m #{exception.message}\e[0m"
+      if module_eval File.read(@path), File.basename(@path), 0
+        @evaluated = true
       end
+    rescue Exception => exception
+      puts "\e[1m#{File.basename @path}:#{exception.line + 1}: \e[31merror:\e[39m #{exception.message}\e[0m"
     end
   end
 end

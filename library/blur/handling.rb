@@ -52,7 +52,6 @@ module Blur
       # Someone send a message
       def got_privmsg network, command
         return if command.sender.is_a? String # Ignore all server privmsgs
-        
         name, message = command.params
         
         if channel = network.channel_by_name(name)
