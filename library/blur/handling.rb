@@ -56,6 +56,9 @@ module Blur
         
         if channel = network.channel_by_name(name)
           if user = channel.user_by_nick(command.sender.nickname)
+            user.name = command.sender.username
+            user.host = command.sender.hostname
+            
             emit :message, user, channel, message
           else
             # Odd… this shouldn't happen

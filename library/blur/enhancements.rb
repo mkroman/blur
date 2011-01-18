@@ -1,7 +1,11 @@
 # encoding: utf-8
 
 class Exception
-  def line; backtrace.first.match(/^.*?:(\d+):/)[1].to_i end
+  Pattern = /^.*?:(\d+):/
+  
+  def line
+    backtrace[0].match(Pattern)[1].to_i + 1
+  end
 end
 
 class String

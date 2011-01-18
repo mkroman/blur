@@ -44,16 +44,20 @@ module Blur
     end
     
     def load_scripts
-      script_path = File.dirname($0)
+      script_path = File.dirname $0
       
       Dir.glob("#{script_path}/scripts/*.rb").each do |path|
-        puts "Evaluating #{path} ..."
-        
         script = Script.new path
         script.client = self
         
         @scripts << script
       end
+    end
+    
+    def unload_scripts
+      @scripts.each do |script|
+        script.unload!
+      end.clear
     end
     
     def quit signal
@@ -99,7 +103,7 @@ module Blur
         begin
           script.__send__ name, *args if script.respond_to? name
         rescue Exception => exception
-          puts "\e[1m#{File.basename script.path}:#{exception.line + 1}: \e[31merror:\e[39m #{exception.message}\e[0m"
+          puts "\e[1m#{File.basename script.path}:#{exception.line}: \e[31merror:\e[39m #{exception.message}\e[0m"
         end
       end
     end

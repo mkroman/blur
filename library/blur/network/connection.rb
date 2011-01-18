@@ -21,6 +21,8 @@ module Blur
       def terminate
         @socket.close
         @socket = nil
+        @buffer = ""
+        @queue.clear
       end
       
       def transmit command

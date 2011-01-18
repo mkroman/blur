@@ -27,7 +27,7 @@ module Blur
       true
     end
     
-    def unload
+    def unload!
       @cache.save if @cache
       
       __send__ :unloaded if respond_to? :unloaded
@@ -48,7 +48,7 @@ module Blur
         @evaluated = true
       end
     rescue Exception => exception
-      puts "\e[1m#{File.basename @path}:#{exception.line + 1}: \e[31merror:\e[39m #{exception.message}\e[0m"
+      puts "\e[1m#{File.basename @path}:#{exception.line}: \e[31merror:\e[39m #{exception.message}\e[0m"
     end
   end
 end
