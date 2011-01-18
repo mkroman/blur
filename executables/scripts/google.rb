@@ -5,20 +5,18 @@ require 'open-uri'
 require 'htmlentities'
 
 Script :google do
-  def message user, channel, line
-    return unless line.starts_with? "!g"
-    
-    command, query = line.split $;, 2
-    
-    unless query
+  extend MessageParsing
+  
+  def command_google user, channel, args
+    unless args
       channel.say format "Usage:\x0F .g <query>"
     end
     
-    if result = search(query)
+    if result = search(args)
       channel.say format "#{HTMLEntities.decode_entities result[0]}\x0F - #{result[1]}"
     else
       channel.say format "No results"
-    end
+    end 
   end
   
   def search query
@@ -33,4 +31,6 @@ Script :google do
   def format message
     %{\x0310>\x0F \x02Google:\x02\x0310 #{message}}
   end
+  
+  alias :command_g :command_google
 end

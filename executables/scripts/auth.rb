@@ -3,13 +3,13 @@
 # TODO: Add proper support for private messages
 
 Script :auth do
+  extend MessageParsing
+  
   def loaded
     cache[:admins] ||= %w{mk!mk@uplink.io}
   end
   
-  def message user, channel, line
-    return unless line.starts_with? ".reload"
-    
+  def command_reload user, channel, args
     if authorized? user
       @client.unload_scripts
       @client.load_scripts
