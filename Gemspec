@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir['library/**/*.rb']
   spec.bindir = "executables"
-  spec.has_rdoc = false
+  spec.has_rdoc = true
   spec.require_path = "library"
   spec.required_ruby_version = ">= 1.9.1"
 end

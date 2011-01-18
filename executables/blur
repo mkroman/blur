@@ -8,7 +8,7 @@ options = {
   networks: [
     {
       hostname: "uplink.io",
-      nickname: "meta-test",
+      nickname: "meta-test2",
       channels: %w{#uplink}
     },
 =begin

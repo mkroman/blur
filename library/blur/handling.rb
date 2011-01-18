@@ -30,6 +30,20 @@ module Blur
         end
       end
       
+      # A channels topic
+      def got_332 network, command
+        me, name, topic = command.params
+        
+        if channel = network.channel_by_name(name)
+          channel.topic = topic
+        else
+          channel = Network::Channel.new name, network, []
+          channel.topic = topic
+          
+          network.channels << channel
+        end
+      end
+      
       # Are we still breathing?
       def got_ping network, command
         network.transmit :PONG, command[0]
@@ -106,6 +120,33 @@ module Blur
               emit :user_quit, channel, user
             end
           end
+        end
+      end
+      
+      # Someone got kicked
+      def got_kick network, command
+        name, target, reason = command.params
+        
+        if channel = network.channel_by_name(name)
+          if kicker = channel.user_by_nick(command.sender.nickname)
+            if kickee = channel.user_by_nick(target)
+              channel.users.delete kickee
+              
+              emit :user_kicked, kicker, channel, kickee, reason
+            end
+          end
+        end
+      end
+      
+      def got_topic network, command
+        name, topic = command.params
+        
+        if channel = network.channel_by_name(name)          
+          if user = channel.user_by_nick(command.sender.nickname)
+            emit :topic, user, channel, topic
+          end
+          
+          channel.topic = topic
         end
       end
 
