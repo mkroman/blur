@@ -6,7 +6,7 @@ module Blur
   class Client
     include Handling
     
-    attr_accessor :options, :networks
+    attr_accessor :options, :scripts, :networks
     
     def initialize options
       @options   = options

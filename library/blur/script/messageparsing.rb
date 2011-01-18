@@ -19,7 +19,7 @@ module Blur
     protected
     
       def serialize name
-        name.gsub /\W/, ''
+        name.gsub /\W/, '' if name
       end
     end
   end
