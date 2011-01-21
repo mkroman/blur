@@ -160,9 +160,11 @@ module Blur
             end
 
             if user = channel.user_by_nick(nick)
+              emit :user_mode, user, modes
               user.merge_modes modes
             end
           else
+            emit :channel_mode, channel, modes
             channel.merge_modes modes
           end
         end

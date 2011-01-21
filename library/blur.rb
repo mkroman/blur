@@ -7,7 +7,7 @@ require 'ostruct'
 Dir.glob("#{File.dirname __FILE__}/blur/**/*.rb").each &method(:require)
 
 module Blur
-  class << Version = [1,4,1]
+  class << Version = [1,5,1]
     def to_s; join '.' end
   end
 
