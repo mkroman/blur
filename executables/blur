@@ -6,18 +6,18 @@ require 'blur'
 
 options = {
   networks: [
+=begin
     {
       hostname: "uplink.io",
       nickname: "meta-test2",
       channels: %w{#uplink}
     },
-=begin
+=end
     {
       hostname: "irc.dk.quakenet.org",
       nickname: "meta-qnet",
       channels: %w{#warsow.na}
     }
-=end
   ]
 }
 

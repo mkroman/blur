@@ -6,7 +6,7 @@ Script :auth do
   extend MessageParsing
   
   def loaded
-    cache[:admins] ||= %w{mk!mk@uplink.io}
+    cache[:admins] = %w{mk!mk@uplink.io}
   end
   
   def command_reload user, channel, args

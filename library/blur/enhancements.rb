@@ -9,5 +9,9 @@ class Exception
 end
 
 class String
+  def numeric?
+    self =~ /^\d+$/
+  end
+
   alias_method :starts_with?, :start_with?
 end

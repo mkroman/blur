@@ -32,6 +32,10 @@ module Blur
       
       __send__ :unloaded if respond_to? :unloaded
     end
+
+    def script name
+      @client.scripts.find { |script| script.name == name }
+    end
     
     def cache
       @cache ||= Cache.new self
@@ -44,9 +48,8 @@ module Blur
   private
   
     def evaluate
-      if module_eval File.read(@path), File.basename(@path), 0
-        @evaluated = true
-      end
+      module_eval File.read(@path), File.basename(@path), 0
+      @evaluated = true
     rescue Exception => exception
       puts "\e[1m#{File.basename @path}:#{exception.line}: \e[31merror:\e[39m #{exception.message}\e[0m"
     end

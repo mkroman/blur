@@ -150,6 +150,24 @@ module Blur
         end
       end
 
+      def got_mode network, command
+        name, modes, limit, nick, mask = command.params
+
+        if channel = network.channel_by_name(name)
+          if limit
+            unless limit.numeric?
+              nick = limit
+            end
+
+            if user = channel.user_by_nick(nick)
+              user.merge_modes modes
+            end
+          else
+            channel.merge_modes modes
+          end
+        end
+      end
+
       alias_method :got_422, :got_end_of_motd
       alias_method :got_376, :got_end_of_motd
     end
