@@ -88,6 +88,7 @@ module Blur
         if channel = network.channel_by_name(name)
           user.name = command.sender.username
           user.host = command.sender.hostname
+          user.channel = channel
           
           channel.users << user
           
