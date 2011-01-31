@@ -47,6 +47,10 @@ module Blur
       def inspect
         %{#<#{self.class.name} @nick=#{@nick.inspect} @channel=#{@channel.name.inspect}>}
       end
+
+      def to_yaml options = {}
+        @nick.to_yaml options
+      end
       
       def to_s
         @nick

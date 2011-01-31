@@ -7,11 +7,13 @@ module Blur
 
     def connected?; @connection.established? end
     
+    def ssl?; @options[:secure] == true end
     def host; @options[:hostname] end
-    def port; @options[:port] ||= (@options[:secure] == true) ? 6697 : 6667 end
+    def port; @options[:port] ||= ssl? ? 6697 : 6667 end
 
     def initialize options = {}
-      @options = options
+      @options  = options
+      @channels = []
       
       unless options[:nickname]
         raise ArgumentError, "nickname is missing from the network's option block"
@@ -21,8 +23,7 @@ module Blur
       @options[:realname] ||= @options[:username]
       @options[:channels] ||= []
 
-      @channels   = []
-      @connection = Connection.new self, host, port
+      @connection = Connection.new self, host, port, ssl?
     end
     
     def say recipient, message

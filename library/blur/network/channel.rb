@@ -40,6 +40,10 @@ module Blur
       def inspect
         %{#<#{self.class.name} @name=#{@name.inspect} @users=#{@users.inspect}}
       end
+      
+      def to_yaml options = {}
+        @name.to_yaml options
+      end
 
       def to_s
         @name

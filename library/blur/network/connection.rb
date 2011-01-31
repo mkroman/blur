@@ -5,17 +5,25 @@ module Blur
     class Connection
       def established?; @socket and not (@socket.closed? or @socket.eof?) end
       
-      def initialize delegate, host = nil, port = nil
+      def initialize delegate, host = nil, port = nil, secure = false
         @host     = host
         @port     = port
         @queue    = []
         @buffer   = ""
         @socket   = nil
+        @secure   = secure
         @delegate = delegate
       end
       
       def establish
         @socket = TCPSocket.new @host, @port
+
+        if @secure
+          require 'openssl'
+
+          @socket = OpenSSL::SSL::SSLSocket.new @socket, OpenSSL::SSL::SSLContext.new
+          @socket.connect
+        end
       end
       
       def terminate
@@ -46,6 +54,9 @@ module Blur
         if socket = writable.first
           socket.write_nonblock "#{command}\n" while command = @queue.shift
         end
+      rescue Errno::EAGAIN, Errno::EWOULDBLOCK
+      rescue OpenSSL::SSL::SSLError
+        raise $! unless $!.message == "read would block" # Really, OpenSSL?
       end
     end
   end

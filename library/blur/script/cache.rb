@@ -12,7 +12,7 @@ module Blur
         File.exists? "#{path}/#{name}.yml"
       end
       
-      def [] key; @hash[key] ||= {} end
+      def [] key; @hash[key] end
       def []= key, value; @hash[key] = value end
       
       def initialize script

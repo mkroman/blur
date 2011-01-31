@@ -28,9 +28,10 @@ module Blur
     end
     
     def unload!
-      @cache.save if @cache
-      
+      cache.save if @cache
       __send__ :unloaded if respond_to? :unloaded
+
+      @cache = nil
     end
 
     def script name

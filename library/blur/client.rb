@@ -68,6 +68,7 @@ module Blur
       end
       
       @connected = false
+      unload_scripts
       
       exit 0
     end
@@ -83,7 +84,7 @@ module Blur
             network.transcieve
             sleep 0.05
           rescue StandardError => exception
-            puts "\e[1m\e[31merror:\e[39m #{exception.message}\e[0m"
+            puts "\e[1m\e[31merror:\e[39m #{exception.message} - #{exception.class.name}\e[0m"
             
             network.disconnect if network.connected?
             @networks.delete network
