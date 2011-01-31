@@ -79,15 +79,15 @@ module Blur
       puts "Starting run loop ..."
       
       while @connected
-        @networks.each do |network|
+        @networks.select(&:connected?).each do |network|
           begin
             network.transcieve
             sleep 0.05
           rescue StandardError => exception
-            puts "\e[1m\e[31merror:\e[39m #{exception.message} - #{exception.class.name}\e[0m"
+            puts "\e[1m\e[31merror:\e[39m #{exception.message} (#{exception.class.name})\e[0m"
             
             network.disconnect if network.connected?
-            @networks.delete network
+            emit :connection_terminated, network
           end
         end
       end

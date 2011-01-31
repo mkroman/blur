@@ -27,9 +27,11 @@ module Blur
       end
       
       def terminate
-        @socket.close
-        @socket = nil
-        @buffer = ""
+        if @socket.close
+          @socket = nil
+        end
+
+        @buffer.clear
         @queue.clear
       end
       
