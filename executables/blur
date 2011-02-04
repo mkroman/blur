@@ -8,21 +8,20 @@ options = {
   networks: [
     {
       hostname: "uplink.io",
-      nickname: "meta-test2",
-      channels: %w{#uplink},
-        secure: true,
-          port: 6697
+      nickname: "meta-test80",
+      channels: %w{#uplink}
     },
-=begin
     {
-      hostname: "irc.dk.quakenet.org",
-      nickname: "meta-qnet",
-      channels: %w{#warsow.na}
+      hostname: "uplink.io",
+      nickname: "meta-lol",
+      channels: %w{#uplink}
     }
-=end
   ]
 }
 
 Blur.connect options do
   puts "==> Blur #{Blur::Version}"
+
+  catch :message do |user, channel, message|
+  end
 end

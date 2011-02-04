@@ -1,13 +1,15 @@
 # encoding: utf-8
 
 require 'yaml'
+require 'majic'
 require 'socket'
 require 'ostruct'
+require 'openssl'
 
 Dir.glob("#{File.dirname __FILE__}/blur/**/*.rb").each &method(:require)
 
 module Blur
-  class << Version = [1,5,1]
+  class << Version = [1,5,2]
     def to_s; join '.' end
   end
 

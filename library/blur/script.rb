@@ -52,7 +52,7 @@ module Blur
       module_eval File.read(@path), File.basename(@path), 0
       @evaluated = true
     rescue Exception => exception
-      puts "\e[1m#{File.basename @path}:#{exception.line}: \e[31merror:\e[39m #{exception.message}\e[0m"
+      puts "#{File.basename(@path) ^ :bold}:#{exception.line.to_s ^ :bold}: #{"error:" ^ :red} #{exception.message ^ :bold}"
     end
   end
 end

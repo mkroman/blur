@@ -3,34 +3,34 @@
 module Blur
   class Network 
     class Connection
-      def established?; @socket and not (@socket.closed? or @socket.eof?) end
+      def established?; @socket and not @socket.closed? end
       
-      def initialize delegate, host = nil, port = nil, secure = false
+      def initialize delegate, host = nil, port = nil
         @host     = host
         @port     = port
         @queue    = []
         @buffer   = ""
         @socket   = nil
-        @secure   = secure
         @delegate = delegate
       end
       
       def establish
         @socket = TCPSocket.new @host, @port
+      end
 
-        if @secure
-          require 'openssl'
+      def enable_ssl validator
+        @secure = true
 
-          @socket = OpenSSL::SSL::SSLSocket.new @socket, OpenSSL::SSL::SSLContext.new
-          @socket.connect
-        end
+        context = OpenSSL::SSL::SSLContext.new
+        context.set_params verify_mode: validator
+
+        sslsocket = OpenSSL::SSL::SSLSocket.new @socket, context
+        sslsocket.sync = true
+        sslsocket.connect_nonblock
       end
       
       def terminate
-        if @socket.close
-          @socket = nil
-        end
-
+        @socket = nil if @socket.close
         @buffer.clear
         @queue.clear
       end
@@ -41,7 +41,7 @@ module Blur
       
       def transcieve
         readable, writable = IO.select [@socket], [@socket]
-        
+
         # If the socket is ready to recieve, do so.
         if socket = readable.first
           @buffer.<< socket.read_nonblock 512
@@ -54,11 +54,19 @@ module Blur
         
         # If it's ready to write, do that too until the outoing queue is empty.
         if socket = writable.first
-          socket.write_nonblock "#{command}\n" while command = @queue.shift
+          while command = @queue.shift
+            socket.write_nonblock "#{command}\n"
+          end
         end
+
       rescue Errno::EAGAIN, Errno::EWOULDBLOCK
+        puts "Insecure connection would block"
       rescue OpenSSL::SSL::SSLError
-        raise $! unless $!.message == "read would block" # Really, OpenSSL?
+        if $!.message == "read would block"
+          puts "Secure connection would block"
+        else
+          raise $!
+        end
       end
     end
   end

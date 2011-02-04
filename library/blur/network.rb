@@ -3,6 +3,7 @@
 module Blur
   class Network
     class ConnectionError < StandardError; end
+
     attr_accessor :options, :channels, :delegate, :connection
 
     def connected?; @connection.established? end
@@ -23,7 +24,7 @@ module Blur
       @options[:realname] ||= @options[:username]
       @options[:channels] ||= []
 
-      @connection = Connection.new self, host, port, ssl?
+      @connection = Connection.new self, host, port
     end
     
     def say recipient, message
@@ -44,6 +45,7 @@ module Blur
 
     def connect
       @connection.establish
+      @connection.enable_ssl OpenSSL::SSL::VERIFY_NONE if ssl?
       
       transmit :PASS, @options[:password] if @options[:password]
       transmit :NICK, @options[:nickname]
@@ -56,7 +58,7 @@ module Blur
     
     def transmit name, *arguments
       command = Command.new name, arguments
-      puts "-> \e[1m#{self}\e[0m | #{command}"
+      puts "-> #{inspect ^ :bold} | #{command}"
       
       @connection.transmit command
     end
@@ -66,7 +68,7 @@ module Blur
     end
     
     def to_s
-      %{#<#{self.class.name} "#{host}:#{port}">}
+      %{#<#{self.class.name} "#{host}":#{port}>}
     end
   end
 end

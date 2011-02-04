@@ -15,9 +15,7 @@ module Blur
       @callbacks = {}
       @connected = true
       
-      @options[:networks].each do |options|
-        @networks.<< Network.new options
-      end
+      @networks = @options[:networks].map { |options| Network.new options }
       
       load_scripts
       trap 2, &method(:quit)
@@ -35,7 +33,7 @@ module Blur
     end
     
     def got_command network, command
-      puts "<- \e[1m#{network}\e[0m | #{command}"
+      puts "<- #{network.inspect ^ :bold} | #{command}"
       name = :"got_#{command.name.downcase}"
       
       if respond_to? name
@@ -84,10 +82,12 @@ module Blur
             network.transcieve
             sleep 0.05
           rescue StandardError => exception
-            puts "\e[1m\e[31merror:\e[39m #{exception.message} (#{exception.class.name})\e[0m"
-            
-            network.disconnect if network.connected?
-            emit :connection_terminated, network
+            if network.connected?
+              network.disconnect
+              emit :connection_terminated, network
+            end
+
+            puts "#{"Network error" ^ :red} (#{exception.class.name}): #{exception.message}"
           end
         end
       end
@@ -104,7 +104,7 @@ module Blur
         begin
           script.__send__ name, *args if script.respond_to? name
         rescue Exception => exception
-          puts "\e[1m#{File.basename script.path}:#{exception.line}: \e[31merror:\e[39m #{exception.message}\e[0m"
+          puts ("#{File.basename script.path}:#{exception.line}" ^ :bold) + ": #{"error:" ^ :red} #{exception.message}"
         end
       end
     end
