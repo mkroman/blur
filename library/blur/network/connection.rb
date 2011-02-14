@@ -18,11 +18,11 @@ module Blur
         @socket = TCPSocket.new @host, @port
       end
 
-      def enable_ssl validator
+      def enable_ssl verification
         @secure = true
 
         context = OpenSSL::SSL::SSLContext.new
-        context.set_params verify_mode: validator
+        context.set_params verify_mode: verification
 
         sslsocket = OpenSSL::SSL::SSLSocket.new @socket, context
         sslsocket.sync = true

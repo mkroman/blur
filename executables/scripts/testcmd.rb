@@ -7,7 +7,7 @@ Script :test do
     channel.say "This channels topic: #{channel.topic}"
   end
 
-  def command_whatismyattributes user, channel, args
+  def command_whataremyattributes user, channel, args
     channel.say ".operator? = #{user.operator?} .owner? = #{user.owner?} .admin? = #{user.admin?} .half_operator? = #{user.half_operator?} .voice? = #{user.voice?}"
   end
 

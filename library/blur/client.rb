@@ -84,8 +84,9 @@ module Blur
           rescue StandardError => exception
             if network.connected?
               network.disconnect
-              emit :connection_terminated, network
             end
+
+            emit :connection_terminated, network
 
             puts "#{"Network error" ^ :red} (#{exception.class.name}): #{exception.message}"
           end

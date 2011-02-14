@@ -7,10 +7,18 @@ module Blur
     attr_accessor :options, :channels, :delegate, :connection
 
     def connected?; @connection.established? end
+
+    def host
+      @options[:hostname]
+    end
+
+    def port
+      @options[:port] ||= secure? ? 6697 : 6667
+    end
     
-    def ssl?; @options[:secure] == true end
-    def host; @options[:hostname] end
-    def port; @options[:port] ||= ssl? ? 6697 : 6667 end
+    def secure?
+      @options[:secure] == true
+    end
 
     def initialize options = {}
       @options  = options
@@ -45,7 +53,7 @@ module Blur
 
     def connect
       @connection.establish
-      @connection.enable_ssl OpenSSL::SSL::VERIFY_NONE if ssl?
+      @connection.enable_ssl OpenSSL::SSL::VERIFY_NONE if secure?
       
       transmit :PASS, @options[:password] if @options[:password]
       transmit :NICK, @options[:nickname]
@@ -54,6 +62,9 @@ module Blur
     
     def disconnect
       @connection.terminate
+
+      @channels.each { |channel| channel.users.clear }
+      @channels.clear
     end
     
     def transmit name, *arguments
