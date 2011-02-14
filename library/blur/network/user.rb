@@ -3,7 +3,7 @@
 module Blur
   class Network
     class User
-      attr_accessor :nick, :name, :host, :modes, :channel
+      attr_accessor :nick, :name, :host, :modes, :channel, :network
 
       def self.map_mode name, character
         define_method(:"#{name}?") { @modes.include? character.to_s }
@@ -41,7 +41,7 @@ module Blur
       end
       
       def say message
-        @channel.network.say self, message
+        @network.say self, message
       end
       
       def inspect

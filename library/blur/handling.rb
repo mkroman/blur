@@ -23,6 +23,8 @@ module Blur
         if channel = network.channel_by_name(name)
           users.each do |user|
             user.channel = channel
+            user.network = network
+
             channel.users << user
           end
         else
@@ -77,6 +79,13 @@ module Blur
           else
             # Odd… this shouldn't happen
           end
+        else # This is a private message
+          user = Network::User.new command.sender.nickname
+          user.name = command.sender.username
+          user.host = command.sender.hostname
+          user.network = network
+
+          emit :private_message, user, message
         end
       end
       
@@ -89,6 +98,7 @@ module Blur
           user.name = command.sender.username
           user.host = command.sender.hostname
           user.channel = channel
+          user.network = network
           
           channel.users << user
           

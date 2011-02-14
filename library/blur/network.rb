@@ -4,7 +4,7 @@ module Blur
   class Network
     class ConnectionError < StandardError; end
 
-    attr_accessor :options, :channels, :delegate, :connection
+    attr_accessor :options, :channels, :dialogues, :delegate, :connection
 
     def connected?; @connection.established? end
 
