@@ -45,7 +45,7 @@ module Blur
     private
     
       def path
-        %{#{Cache.path}/#{@script.name}.yml}
+        %{#{Cache.path}/#{@script.__name}.yml}
       end
     end
   end

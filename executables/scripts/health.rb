@@ -4,7 +4,7 @@ Script :health do
   extend MessageParsing
 
   def command_health user, channel, args
-    channel.say format "Memory usage:\x0F #{memory_usage} MB\x0310 Threads:\x0F #{Thread.list.length}\x0310 Scripts:\x0F #{@client.scripts.count}\x0310"
+    channel.say format "Memory usage:\x0F #{memory_usage} MB\x0310 Threads:\x0F #{Thread.list.length}\x0310 Scripts:\x0F #{@__client.scripts.count}\x0310"
   end
 
   def format message

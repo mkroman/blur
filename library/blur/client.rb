@@ -46,7 +46,7 @@ module Blur
       
       Dir.glob("#{script_path}/scripts/*.rb").each do |path|
         script = Script.new path
-        script.client = self
+        script.__client = self
         
         @scripts << script
       end
@@ -105,7 +105,7 @@ module Blur
         begin
           script.__send__ name, *args if script.respond_to? name
         rescue Exception => exception
-          puts ("#{File.basename script.path}:#{exception.line}" ^ :bold) + ": #{"error:" ^ :red} #{exception.message}"
+          puts ("#{File.basename script.__path}:#{exception.line}" ^ :bold) + ": #{"error:" ^ :red} #{exception.message}"
         end
       end
     end

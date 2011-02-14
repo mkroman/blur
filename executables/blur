@@ -10,9 +10,9 @@ options = {
 
 3.times do |i|
   test = {
-    hostname: "irc.dk.quakenet.org",
+    hostname: "uplink.io",
     nickname: "test-#{i}",
-    channels: %w{#warsow.na}
+    channels: %w{#uplink}
   }
 
   options[:networks] << test

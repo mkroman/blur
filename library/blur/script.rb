@@ -2,25 +2,25 @@
 
 module Blur
   class Script < Module
-    attr_accessor :name, :author, :version, :path, :client
+    attr_accessor :__name, :__author, :__version, :__path, :__client
     
-    def evaluated?; @evaluated end
+    def evaluated?; @__evaluated end
     
     def initialize path
-      @path = path
-      @evaluated = false
+      @__path = path
+      @__evaluated = false
       
-      if evaluate and @evaluated
-        cache.load if Cache.exists? @name
+      if evaluate and @__evaluated
+        cache.load if Cache.exists? @__name
         
         __send__ :loaded if respond_to? :loaded
       end
     end
     
     def Script name, version = [1,0], author = nil, &block
-      @name    = name
-      @author  = author
-      @version = version
+      @__name    = name
+      @__author  = author
+      @__version = version
       
       instance_eval &block
       
@@ -28,31 +28,31 @@ module Blur
     end
     
     def unload!
-      cache.save if @cache
+      cache.save if @__cache
       __send__ :unloaded if respond_to? :unloaded
 
-      @cache = nil
+      @__cache = nil
     end
 
     def script name
-      @client.scripts.find { |script| script.name == name }
+      @__client.scripts.find { |script| script.__name == name }
     end
     
     def cache
-      @cache ||= Cache.new self
+      @__cache ||= Cache.new self
     end
     
     def inspect
-      %{#<#{self.class.name} @name=#{@name.inspect} @version=#{@version.inspect} @author=#{@author.inspect}>}
+      %{#<#{self.class.name} @name=#{@__name.inspect} @version=#{@__version.inspect} @author=#{@__author.inspect}>}
     end
     
   private
   
     def evaluate
-      module_eval File.read(@path), File.basename(@path), 0
-      @evaluated = true
+      module_eval File.read(@__path), File.basename(@__path), 0
+      @__evaluated = true
     rescue Exception => exception
-      puts "#{File.basename(@path) ^ :bold}:#{exception.line.to_s ^ :bold}: #{"error:" ^ :red} #{exception.message ^ :bold}"
+      puts "#{File.basename(@__path) ^ :bold}:#{exception.line.to_s ^ :bold}: #{"error:" ^ :red} #{exception.message ^ :bold}"
     end
   end
 end
