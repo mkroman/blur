@@ -26,7 +26,8 @@ module Blur
 
         sslsocket = OpenSSL::SSL::SSLSocket.new @socket, context
         sslsocket.sync = true
-        sslsocket.connect_nonblock
+        sslsocket.connect #_nonblock
+        @socket = sslsocket
       end
       
       def terminate
