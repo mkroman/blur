@@ -6,7 +6,7 @@ require 'blur'
 
 Gem::Specification.new do |spec|
   spec.name    = "blur"
-  spec.version = Blur::Version.to_s
+  spec.version = Blur::Version
   spec.summary = "Extensible IRC library"
 
   spec.author  = "Mikkel Kroman"

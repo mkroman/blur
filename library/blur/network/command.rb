@@ -2,11 +2,30 @@
 
 module Blur
   class Network
+    # The +Command+ class is used for encapsulating the command-lines.
+    #
+    # Blur is using regular-expression for parsing, this is to be replaced
+    # with a more native way of parsing, making it much, much easier on the
+    # processor.
     class Command
-      attr_accessor :name, :params, :prefix
+      # @return [Symbol, Fixnum] the command name.
+      # @example
+      #   332 or :quit
+      attr_accessor :name
+      # @return [Array] a list of parameters.
+      attr_accessor :params
+      # @return [String] a hostname or a hostmask.
+      attr_accessor :prefix
 
+      # The arbitrary regex pattern.
       Pattern = /^(?:[:@]([^\s]+) )?([^\s]+)(?: ((?:[^:\s][^\s]* ?)*))?(?: ?:(.*))?$/
       
+      # Parse a line and encapsulate it as a Command.
+      #
+      # @return [Command] the parsed command.
+      # @example
+      #   Command.parse "ChanServ!ChanServ@services.uplink.io MODE #uplink +v mk"
+      #   # => #<Blur::Network::Command … >
       def self.parse data
         match = data.strip.match Pattern
         prefix, name, args, extra = match.captures
@@ -17,12 +36,23 @@ module Blur
         end
       end
 
+      # Get a parameter by its +index+.
       def [] index; @params[index] end
 
+      # Instantiate a command.
+      #
+      # @see Command.parse
       def initialize name, params = []
         @name, @params = name, params
       end
 
+      # Get the sender of the command.
+      #
+      # @note the return value is a string if it's a hostname, and an openstruct
+      #   with the attributes #nickname, #username and #hostname if it's a
+      #   hostmask.
+      #
+      # @return [String, OpenStruct] the sender.
       def sender
         return @sender if @sender
 
@@ -33,6 +63,9 @@ module Blur
         end
       end 
 
+      # Convert it to an IRC-compliant line.
+      #
+      # @return [String] the command line.
       def to_s
         String.new.tap do |line|
           line << "#{prefix} " if prefix
