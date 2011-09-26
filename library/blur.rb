@@ -9,7 +9,7 @@ require 'openssl'
 Dir.glob("#{File.dirname __FILE__}/blur/**/*.rb").each &method(:require)
 
 module Blur
-  class << Version = [1,5,3]
+  class << Version = [1,6]
     def to_s; join '.' end
   end
 

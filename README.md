@@ -29,6 +29,3 @@ Known Issues
 ------------
   1. When Blur is connected through a secure network it tends to block a long
      time before it starts processing some data; this can cause it to time out.
-  2. There are quite a lot of name collisions in Blur: for instance, in scripts
-     there is a reference to the main client, which is a class variable defined
-     in that script, named `@client`.
