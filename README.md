@@ -6,6 +6,14 @@ There are a bunch of other well-written, well-running IRC libraries made for
 Ruby, but for me, they don't quite cut it as **the** library I wanted to use for
 my IRC services. That's how Blur came to be.
 
+Blur scales. A lot.
+
+When I stresstested the library on my network, I ended up throttling my VDSL
+connection before Blur even broke a sweat - albeit I only have 20/2.
+
+I managed to connect with 5000 clones before it couldn't resolve the hostname
+anymore, while this is an excellent feature, I would not suggest doing it.
+
 Features
 --------
   * SSL/TLS encryption
