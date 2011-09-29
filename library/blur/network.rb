@@ -21,7 +21,7 @@ module Blur
     attr_accessor :connection
 
     # Check whether or not connection is established.
-    def connected?; @connection.established? end
+    def connected?; @connection and @connection.established? end
 
     # Get the remote hostname.
     #
@@ -59,8 +59,6 @@ module Blur
       @options[:username] ||= @options[:nickname]
       @options[:realname] ||= @options[:username]
       @options[:channels] ||= []
-
-      @connection = Connection.new self, host, port
     end
     
     # Send a message to a recipient.
@@ -97,9 +95,11 @@ module Blur
     #
     # @see Connection
     def connect
-      @connection.establish
-      @connection.enable_ssl OpenSSL::SSL::VERIFY_NONE if secure?
-      
+      @connection = EventMachine.connect host, port, Connection, self
+    end
+
+    # Called when the connection was successfully established.
+    def connected!
       transmit :PASS, @options[:password] if @options[:password]
       transmit :NICK, @options[:nickname]
       transmit :USER, @options[:username], :void, :void, @options[:realname]
@@ -107,7 +107,7 @@ module Blur
     
     # Terminate the connection and clear all channels and users.
     def disconnect
-      @connection.terminate
+      @connection.close_connection true
 
       @channels.each { |channel| channel.users.clear }
       @channels.clear
@@ -119,15 +119,10 @@ module Blur
     # @param [...] arguments all the prepended parameters.
     def transmit name, *arguments
       command = Command.new name, arguments
-      puts "-> #{inspect ^ :bold} | #{command}"
+      #puts "-> #{inspect ^ :bold} | #{command}"
       
-      @connection.transmit command
+      @connection.send_data "#{command}\r\n"
     end
-    
-    # Tell the connection to transcieve.
-    #
-    # @see Connection#transcieve
-    def transcieve; @connection.transcieve end
     
     # Convert it to a debug-friendly format.
     def to_s

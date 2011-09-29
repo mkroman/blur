@@ -12,11 +12,11 @@ Gem::Specification.new do |spec|
   spec.author  = "Mikkel Kroman"
   spec.email   = "mk@maero.dk"
 
-  spec.files = Dir['library/**/*.rb']
-  spec.bindir = "executables"
-  spec.has_rdoc = true
+  spec.files = Dir["library/**/*.rb"]
   spec.require_path = "library"
-  spec.required_ruby_version = ">= 1.9.1"
+
+  spec.add_dependency "majic", ">= 0.1"
+  spec.add_dependency "eventmachine", "> 0.12"
 end
 
 # vim: set syntax=ruby:

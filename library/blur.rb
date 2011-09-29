@@ -5,6 +5,7 @@ require 'majic'
 require 'socket'
 require 'ostruct'
 require 'openssl'
+require 'eventmachine'
 
 # Require all library files.
 Dir.glob("#{File.dirname __FILE__}/blur/**/*.rb").each &method(:require)

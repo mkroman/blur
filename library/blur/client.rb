@@ -28,7 +28,6 @@ module Blur
       @scripts   = []
       @networks  = []
       @callbacks = {}
-      @connected = true
       
       @networks = @options[:networks].map {|options| Network.new options }
       
@@ -41,12 +40,12 @@ module Blur
     def connect
       networks = @networks.select {|network| not network.connected? }
       
-      networks.each do |network|
-        network.delegate = self
-        network.connect
+      EventMachine.run do
+        networks.each_with_index do |network, index|
+          network.delegate = self
+          network.connect
+        end
       end
-      
-      run_loop
     end
     
     # Is called when a command have been received and parsed, this distributes
@@ -56,7 +55,7 @@ module Blur
     # @param [Network] network the network that received the command.
     # @param [Network::Command] command the received command.
     def got_command network, command
-      puts "<- #{network.inspect ^ :bold} | #{command}"
+      #puts "<- #{network.inspect ^ :bold} | #{command}"
       name = :"got_#{command.name.downcase}"
       
       if respond_to? name
@@ -92,45 +91,15 @@ module Blur
     def quit signal = :SIGINT
       @networks.each do |network|
         network.transmit :QUIT, "Got SIGINT?"
-        network.transcieve
         network.disconnect
       end
       
-      @connected = false
       unload_scripts
       
       exit 0
     end
     
-  private
-    # Starts a run loop which keeps calling {Network#transcieve} which then
-    # processes the input/output buffer of the network and possible commands,
-    # if any.
-    #
-    # @private
-    def run_loop
-      puts "Starting run loop ..."
-      
-      while @connected
-        @networks.select(&:connected?).each do |network|
-          begin
-            network.transcieve
-            sleep 0.05
-          rescue StandardError => exception
-            if network.connected?
-              network.disconnect
-            end
-
-            emit :connection_terminated, network
-
-            puts "#{"Network error" ^ :red} (#{exception.class.name}): #{exception.message}"
-          end
-        end
-      end
-
-      puts "Ended run loop ..."
-    end
-    
+  private    
     # Finds all callbacks with name `name` and then calls them.
     # It also sends `name` to {Script} if the script responds to `name`, to all
     #   available scripts.
