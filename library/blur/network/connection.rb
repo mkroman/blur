@@ -2,6 +2,14 @@
 
 module Blur
   class Network
+    # The +Connection+ class inherits the LineAndText protocol bundled with
+    # the eventmachine library.
+    #
+    # It merely acts as a receiving handler for all messages eventmachine throws
+    # at it through its lifetime.
+    #
+    # @see EventMachine::Protocols::LineAndTextProtocol
+    # @see EventMachine::Connection
     class Connection < EM::Protocols::LineAndTextProtocol
       # Check whether or not connection is established.
       def established?; @connected == true end

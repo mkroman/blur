@@ -2,9 +2,23 @@
 
 module Blur
   module Encryption
+    # The +Encryption::Base64+ module differs from the original Base64
+    # implementation. I'm not sure how exactly, perhaps the charset?
+    #
+    # I originally found the Ruby implementation of FiSH on a website where
+    # it was graciously submitted by an anonymous user, since then I've
+    # implemented it in a weechat script, and now I've refactored it for use in
+    # Blur.
+    #
+    # @see http://maero.dk/pub/sources/weechat/ruby/autoload/fish.rb
     module Base64
+      # The difference I suspect between the original Base64 implementation
+      # and the one used in FiSH.
       Charset = "./0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+      # Decode a base64-encoded string.
+      #
+      # @return [String] Base64-decoded string.
       def self.decode string
         unless string.length % 12 == 0
           raise BadInputError, "input has to be a multiple of 12 characters."
@@ -30,6 +44,9 @@ module Blur
         end
       end
 
+      # Encode a string-cipher.
+      #
+      # @return [String] Base64-encoded string.
       def self.encode string
         unless string.length % 8 == 0
           raise BadInputError, "input has to be a multiple of 8 characters."
