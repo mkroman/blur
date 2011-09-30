@@ -38,6 +38,9 @@ module Blur
     # Check to see if it's a secure connection.
     def secure?; @options[:secure] == true end
 
+    # Check to see if FiSH encryption is enabled.
+    def fish?; not @options[:fish].nil? end
+
     # Instantiates the network.
     #
     # @param [Hash] options the network options.
@@ -66,6 +69,10 @@ module Blur
     # @param [String, #to_s] recipient the recipient.
     # @param [String] message the message.
     def say recipient, message
+      if recipient.is_a? Channel and recipient.encrypted?
+        message = "+OK #{recipient.encryption.encrypt message}"
+      end
+
       transmit :PRIVMSG, recipient, message
     end
     
@@ -107,7 +114,7 @@ module Blur
     
     # Terminate the connection and clear all channels and users.
     def disconnect
-      @connection.close_connection true
+      @connection.close_connection_after_writing
 
       @channels.each { |channel| channel.users.clear }
       @channels.clear
@@ -119,7 +126,7 @@ module Blur
     # @param [...] arguments all the prepended parameters.
     def transmit name, *arguments
       command = Command.new name, arguments
-      #puts "-> #{inspect ^ :bold} | #{command}"
+      puts "-> #{inspect ^ :bold} | #{command}"
       
       @connection.send_data "#{command}\r\n"
     end

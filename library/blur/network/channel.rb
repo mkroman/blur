@@ -23,6 +23,11 @@ module Blur
       attr_accessor :modes
       # @return [Network] a reference to the network.
       attr_accessor :network
+      # @return [Encryption::Fish] the channel encryption, if any.
+      attr_accessor :encryption
+
+      # Check whether or not this is an encrypted channel.
+      def encrypted?; not @encryption.nil? end
 
       # Instantiate a user with a nickname, a network and a user list.
       def initialize name, network = nil, users = []

@@ -41,10 +41,12 @@ module Blur
       networks = @networks.select {|network| not network.connected? }
       
       EventMachine.run do
-        networks.each_with_index do |network, index|
+        networks.each do |network|
           network.delegate = self
           network.connect
         end
+
+        EventMachine.error_handler{|e| p e }
       end
     end
     
@@ -55,7 +57,7 @@ module Blur
     # @param [Network] network the network that received the command.
     # @param [Network::Command] command the received command.
     def got_command network, command
-      #puts "<- #{network.inspect ^ :bold} | #{command}"
+      puts "<- #{network.inspect ^ :bold} | #{command}"
       name = :"got_#{command.name.downcase}"
       
       if respond_to? name
@@ -96,7 +98,7 @@ module Blur
       
       unload_scripts
       
-      exit 0
+      EventMachine.stop
     end
     
   private    
