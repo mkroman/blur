@@ -8,7 +8,17 @@ require 'openssl'
 require 'eventmachine'
 
 # Require all library files.
-Dir.glob("#{File.dirname __FILE__}/blur/**/*.rb").each &method(:require)
+require 'blur/client'
+require 'blur/script'
+require 'blur/network'
+require 'blur/encryption'
+require 'blur/enhancements'
+require 'blur/script/cache'
+require 'blur/network/user'
+require 'blur/network/channel'
+require 'blur/network/command'
+require 'blur/network/connection'
+require 'blur/script/messageparsing'
 
 # Blur is a very modular IRC-framework for ruby.
 #

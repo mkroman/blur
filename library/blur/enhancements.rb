@@ -25,5 +25,15 @@ class String
     self =~ /^\d+$/
   end
 
+  # Split a string up in n chunks and then iterate through them, exactly like
+  # Enumerable#each_slice.
+  #
+  # @return [Enumerator] list of slices.
+  # @yieldreturn [Array] list of elements in each slice consecutively.
+  def each_slice size = 8
+    self.chars.each_slice(size).each{|slice| yield slice.join }
+  end
+
   alias_method :starts_with?, :start_with?
+  alias_method :each_block, :each_slice
 end
