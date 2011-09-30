@@ -7,23 +7,33 @@ module Blur
     # The +FiSH+ algorithm is a combination of Base64 encoding
     # and the blowfish encryption.
     #
-    # Shared text messages are prepended by “+OK”, an older implementation
-    # prepends it with “mcps” - Blur drops support for that implementation.
+    # Shared text messages are prepended by "++OK+", an older implementation
+    # prepends it with "+mcps+" - Blur drops support for that implementation.
     #
     # There's multiple client-implementations available on the official FiSH
     # homepage.
     #
     # == DH1080 Key exchange
-    # The newer FiSH implementation introduces a 1080bit germain prime
-    # Diffie-Hellman key-exchange mechanism.
+    # The newer FiSH implementation introduces a 1080bit Diffie-Hellman 
+    # key-exchange mechanism.
     #
     # Blur does currently not support key exchanges.
     class FiSH
       # The standard FiSH block-size.
       BlockSize = 8
 
+      # @return [String] the blowfish salt-key.
+      attr_accessor :keyphrase      
+
+      # Change the keyphrase and instantiate a new blowfish object.
+      def keyphrase= keyphrase
+        @keyphrase = keyphrase
+        @blowfish = Crypt::Blowfish.new @keyphrase
+      end
+
       # Instantiate a new fish-encryption object.
       def initialize keyphrase
+        @keyphrase = keyphrase
         @blowfish = Crypt::Blowfish.new keyphrase
       end
 
