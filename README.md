@@ -18,6 +18,14 @@ Features
 --------
   * SSL/TLS encryption
   * Connect to multiple networks
+  * FiSH (channel-wide) encryptions
   * Non-blocking connections (no threading)
   * Extensible with scripts, (re)loadable during runtime
   * Modular, makes it a piece of cake to extend its IRC-capability
+
+Future Plans
+------------
+  * DCC File-transfers
+  * DH1080 Key-Exchange
+  * ISupport implementation
+  * Better event-handling in scripts
