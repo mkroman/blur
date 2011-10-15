@@ -110,17 +110,19 @@ module Blur
     # @param [...] args Arguments that is passed to the event-handler.
     # @private
     def emit name, *args
-      @callbacks[name].each do |callback|
-        callback.call *args
-      end if @callbacks[name]
+      EM.defer do
+        @callbacks[name].each do |callback|
+          callback.call *args
+        end if @callbacks[name]
 
-      scripts = @scripts.select{|script| script.__emissions.include? name }
-      
-      scripts.each do |script|
-        begin
-          script.__send__ name, *args
-        rescue Exception => exception
-          log.error "#{File.basename(script.__path) << " - " << exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+        scripts = @scripts.select{|script| script.__emissions.include? name }
+        
+        scripts.each do |script|
+          begin
+            script.__send__ name, *args
+          rescue Exception => exception
+            log.error "#{File.basename(script.__path) << " - " << exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+          end
         end
       end
     end
