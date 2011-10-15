@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.require_path = "library"
 
   spec.add_dependency "majic", ">= 0.2"
-  spec.add_dependency "crypt19"
+  spec.add_dependency "crypt19", ">= 1.2.1"
   spec.add_dependency "eventmachine", "> 0.12"
 end
 

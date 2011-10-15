@@ -27,7 +27,7 @@ require 'blur/script/messageparsing'
 # It can be by handlers, scripts, communications, and what have you.
 module Blur
   # The major and minor version-values of Blur.
-  Version = "1.6"
+  Version = "1.6.1"
 
   # Instantiates a client with given options and then makes the client instance
   # evaluate the given block to form a DSL.
