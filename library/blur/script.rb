@@ -9,6 +9,12 @@ module Blur
   # @todo add examples in the documentation
   # @see Script#Script
   class Script < Module
+    include Logging
+
+    Emissions = [:connection_ready, :topic_change, :user_rename, :message,
+                 :private_message, :user_entered, :user_left, :user_quit,
+                 :user_kicked, :topic, :user_mode, :channel_mode]
+
     # @return the name of the script.
     attr_accessor :__name
     # @return the author of the script.
@@ -20,6 +26,8 @@ module Blur
     # Can be used inside the script to act with the client itself.
     # @return [Network::Client] the client delegate.
     attr_accessor :__client
+    # @return [Array] a list of handled emissions.
+    attr_accessor :__emissions
     
     # Check to see if the script has been evaluated.
     def evaluated?; @__evaluated end
@@ -28,9 +36,14 @@ module Blur
     def initialize path
       @__path = path
       @__evaluated = false
+      @__emissions = []
       
       if evaluate and @__evaluated
         cache.load if Cache.exists? @__name
+
+        Emissions.each do |emission|
+          @__emissions.push emission if respond_to? emission
+        end
         
         __send__ :loaded if respond_to? :loaded
       end
@@ -76,17 +89,17 @@ module Blur
     
     # Convert it to a debug-friendly format.
     def inspect
-      %{#<#{self.class.name} @name=#{@__name.inspect} @version=#{@__version.inspect} @author=#{@__author.inspect}>}
+      File.basename @__path
     end
     
   private
   
     # Attempt to evaluate the contents of the script.
     def evaluate
-      module_eval File.read(@__path), File.basename(@__path), 0
+      instance_eval File.read(@__path), File.basename(@__path), 0
       @__evaluated = true
     rescue Exception => exception
-      puts "#{File.basename(@__path) ^ :bold}:#{exception.line.to_s ^ :bold}: #{"error:" ^ :red} #{exception.message ^ :bold}"
+      log.error "#{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
     end
   end
 end

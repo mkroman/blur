@@ -134,7 +134,7 @@ module Blur
                 message = channel.encryption.decrypt message[4..-1]
               end
             rescue Encryption::BadInputError
-              # …
+              puts "-!- FiSH: #{$!.message}"
             rescue => exception
               puts "-!- There was a problem with the FiSH encryption, disabling"
 

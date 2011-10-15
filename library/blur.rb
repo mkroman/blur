@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+require 'pp'
 require 'yaml'
 require 'majic'
 require 'socket'

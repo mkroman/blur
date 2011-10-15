@@ -6,6 +6,8 @@ module Blur
   # Although the connection is a part of the network module, it is mainly used
   # for network-related structures, such as {User}, {Channel} and {Command}.
   class Network
+    include Logging
+    
     # +ConnectionError+ should only be triggered from within {Connection}.
     class ConnectionError < StandardError; end
 
@@ -73,7 +75,7 @@ module Blur
         message = "+OK #{recipient.encryption.encrypt message}"
       end
 
-      transmit :PRIVMSG, recipient, message
+      transmit :PRIVMSG, recipient.to_s, message
     end
     
     # Called when the network connection has enough data to form a command.
@@ -126,7 +128,7 @@ module Blur
     # @param [...] arguments all the prepended parameters.
     def transmit name, *arguments
       command = Command.new name, arguments
-      puts "-> #{inspect ^ :bold} | #{command}"
+      log "#{'→' ^ :red} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
       
       @connection.send_data "#{command}\r\n"
     end

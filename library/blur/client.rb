@@ -8,7 +8,7 @@ module Blur
   # It stores networks, scripts and callbacks, and is also encharge of
   # distributing the incoming commands to the right networks and scripts.
   class Client
-    include Handling
+    include Handling, Logging
     
     # @return [Array] the options that is passed upon initialization.
     attr_accessor :options
@@ -57,7 +57,7 @@ module Blur
     # @param [Network] network the network that received the command.
     # @param [Network::Command] command the received command.
     def got_command network, command
-      puts "<- #{network.inspect ^ :bold} | #{command}"
+      log "#{'←' ^ :green} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
       name = :"got_#{command.name.downcase}"
       
       if respond_to? name
@@ -113,12 +113,14 @@ module Blur
       @callbacks[name].each do |callback|
         callback.call *args
       end if @callbacks[name]
+
+      scripts = @scripts.select{|script| script.__emissions.include? name }
       
-      @scripts.each do |script|
+      scripts.each do |script|
         begin
-          script.__send__ name, *args if script.respond_to? name
+          script.__send__ name, *args
         rescue Exception => exception
-          puts ("#{File.basename script.__path}:#{exception.line}" ^ :bold) + ": #{"error:" ^ :red} #{exception.message}"
+          log.error "#{File.basename(script.__path) << " - " << exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
         end
       end
     end

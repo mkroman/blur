@@ -61,7 +61,7 @@ module Blur
         else
           @sender = prefix
         end
-      end 
+      end
 
       # Convert it to an IRC-compliant line.
       #

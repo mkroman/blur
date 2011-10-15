@@ -30,6 +30,10 @@ module Blur
     module MessageParsing
       # The prefix that turns it into a possible command.
       MessageTrigger = "."
+
+      def self.extended klass
+        warn "#{File.realpath __FILE__}: MessageParsing will be deprecated in the future, use Fantasy."
+      end
       
       # Handle all calls to the scripts +message+ method, check to see if
       # the message containts a valid command, serialize it and pass it to
