@@ -79,8 +79,14 @@ module Blur
         if channel = network.channel_by_name(name)
           emit :topic_change, channel, topic
           channel.topic = topic
-        else
+        else          
           channel = Network::Channel.new name, network, []
+
+          if network.fish? and network.options[:fish].key? name
+            keyphrase = network.options[:fish][name]
+            channel.encryption = Encryption::FiSH.new keyphrase
+          end
+          
           emit :topic_change, channel, topic
           channel.topic = topic
           
