@@ -16,6 +16,7 @@ require 'blur/encryption'
 require 'blur/enhancements'
 require 'blur/script/cache'
 require 'blur/network/user'
+require 'blur/script/fantasy'
 require 'blur/network/channel'
 require 'blur/network/command'
 require 'blur/network/connection'
@@ -27,7 +28,7 @@ require 'blur/script/messageparsing'
 # It can be by handlers, scripts, communications, and what have you.
 module Blur
   # The major and minor version-values of Blur.
-  Version = "1.6.2.pre"
+  Version = "1.7.0"
 
   # Instantiates a client with given options and then makes the client instance
   # evaluate the given block to form a DSL.

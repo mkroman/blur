@@ -46,6 +46,7 @@ module Blur
         end
         
         __send__ :loaded if respond_to? :loaded
+        __send__ :module_init if respond_to? :module_init
       end
     end
     
