@@ -33,6 +33,8 @@ module Blur
       
       load_scripts
       trap 2, &method(:quit)
+
+      EventMachine.threadpool_size = 1
     end
     
     # Connect to each network available that is not already connected, then
