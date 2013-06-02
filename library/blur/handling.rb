@@ -29,7 +29,6 @@ module Blur
     #   
     # @see http://www.irchelp.org/irchelp/rfc/chapter6.html
     module Handling
-    protected
     
       # Called when the MOTD was received, which also means it is ready.
       #
