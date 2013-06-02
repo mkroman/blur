@@ -1,29 +1,22 @@
 #!/usr/bin/gem build
 # encoding: utf-8
 
-$:.unshift File.dirname(__FILE__) + '/library'
-require 'blur'
-
 Gem::Specification.new do |spec|
-  spec.name    = "blur"
-  spec.version = Blur::Version
-  spec.summary = "An event-driven IRC-framework for Ruby."
-  spec.description = <<-eos
-    An event-driven IRC-framework in and for Ruby. Is extensible and supports script with (re)loading functionality during runtime.
-  eos
+  spec.name     = "blur"
+  spec.version  = "1.7.2"
+  spec.summary  = "An event-driven IRC-framework for Ruby."
 
   spec.homepage = "https://github.com/mkroman/blur"
-  spec.license  = "ISC"
-
-  spec.author  = "Mikkel Kroman"
-  spec.email   = "mk@maero.dk"
-
-  spec.files = Dir["library/**/*.rb"]
-  spec.require_path = "library"
+  spec.license  = "Internet Systems Consortium (ISC)"
+  spec.author   = "Mikkel Kroman"
+  spec.email    = "mk@uplink.io"
+  spec.files    = Dir["library/**/*.rb"]
 
   spec.add_dependency "majic", ">= 0.2"
-  spec.add_dependency "crypt19", ">= 1.2.1"
   spec.add_dependency "eventmachine", "> 0.12"
+
+  spec.require_path = "library"
+  spec.required_ruby_version = ">= 1.9.1"
 end
 
 # vim: set syntax=ruby:
