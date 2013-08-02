@@ -53,6 +53,7 @@ module Blur
       # local.
       def unbind
         @connected = false
+        @network.disconnected!
 
         super
       end

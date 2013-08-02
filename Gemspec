@@ -3,7 +3,7 @@
 
 Gem::Specification.new do |spec|
   spec.name     = "blur"
-  spec.version  = "1.7.2"
+  spec.version  = "1.7.3"
   spec.summary  = "An event-driven IRC-framework for Ruby."
 
   spec.homepage = "https://github.com/mkroman/blur"

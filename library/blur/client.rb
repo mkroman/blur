@@ -87,6 +87,11 @@ module Blur
         script.unload!
       end.clear
     end
+
+    # Called when a network connection is either closed, or terminated.
+    def network_connection_closed network
+      emit :connection_close, network
+    end
     
     # Try to gracefully disconnect from each network, unload all scripts and
     # exit properly.

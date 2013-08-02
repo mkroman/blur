@@ -113,13 +113,18 @@ module Blur
       transmit :NICK, @options[:nickname]
       transmit :USER, @options[:username], :void, :void, @options[:realname]
     end
+
+    # Called when the connection was closed.
+    def disconnected!
+      @channels.each { |channel| channel.users.clear }
+      @channels.clear
+
+      @delegate.network_connection_closed self
+    end
     
     # Terminate the connection and clear all channels and users.
     def disconnect
       @connection.close_connection_after_writing
-
-      @channels.each { |channel| channel.users.clear }
-      @channels.clear
     end
     
     # Transmit a command to the server.
