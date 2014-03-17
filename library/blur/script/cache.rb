@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 module Blur
-  class Script < Module
+  class Script
     # The +Cache+ class enables data storing inside Blur and it scripts.
     #
     # What it does is simply store a hash, and act like it is that hash.
