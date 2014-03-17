@@ -10,17 +10,19 @@ require 'eventmachine'
 
 # Require all library files.
 require 'blur/client'
+require 'blur/extension'
+require 'blur/script/dsl'
+require 'blur/evaluable'
 require 'blur/script'
 require 'blur/network'
 require 'blur/encryption'
 require 'blur/enhancements'
 require 'blur/script/cache'
 require 'blur/network/user'
-require 'blur/script/fantasy'
 require 'blur/network/channel'
 require 'blur/network/command'
 require 'blur/network/connection'
-require 'blur/script/messageparsing'
+require 'blur/script/commands'
 
 # Blur is a very modular IRC-framework for ruby.
 #
@@ -28,7 +30,7 @@ require 'blur/script/messageparsing'
 # It can be by handlers, scripts, communications, and what have you.
 module Blur
   # The major and minor version-values of Blur.
-  Version = "1.7.3"
+  Version = "1.8"
 
   # Instantiates a client with given options and then makes the client instance
   # evaluate the given block to form a DSL.
