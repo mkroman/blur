@@ -3,11 +3,11 @@
 
 Gem::Specification.new do |spec|
   spec.name     = "blur"
-  spec.version  = "1.7.3"
+  spec.version  = "1.8"
   spec.summary  = "An event-driven IRC-framework for Ruby."
 
   spec.homepage = "https://github.com/mkroman/blur"
-  spec.license  = "Internet Systems Consortium (ISC)"
+  spec.license  = "MIT"
   spec.author   = "Mikkel Kroman"
   spec.email    = "mk@uplink.io"
   spec.files    = Dir["library/**/*.rb"]

@@ -8,19 +8,16 @@ module Blur
   #
   # @todo add examples in the documentation
   # @see Script#Script
-  class Script < Module
+  class Script
     include Logging
+    include Evaluable
+    include DSL
 
+    ExtensionNotFoundError = Class.new StandardError
     Emissions = [:connection_ready, :topic_change, :user_rename, :message,
                  :private_message, :user_entered, :user_left, :user_quit,
                  :user_kicked, :topic, :user_mode, :channel_mode]
 
-    # @return the name of the script.
-    attr_accessor :__name
-    # @return the author of the script.
-    attr_accessor :__author
-    # @return the version of the script.
-    attr_accessor :__version
     # @return the path in which the script remains.
     attr_accessor :__path
     # Can be used inside the script to act with the client itself.
@@ -28,6 +25,26 @@ module Blur
     attr_accessor :__client
     # @return [Array] a list of handled emissions.
     attr_accessor :__emissions
+
+    # A list of extensions.
+    @@__extensions = []
+
+    # Find and evaluate script extensions.
+    def self.load_extensions!
+      root_path = File.dirname $0
+      
+      Dir.glob("#{root_path}/extensions/*.rb").each do |path|
+        extension = Extension.new path
+        extension.__client = self
+        
+        @@__extensions << extension
+      end
+    end
+
+    # "Unload" all script extensions.
+    def self.unload_extensions!
+      @@__extensions.clear
+    end
     
     # Check to see if the script has been evaluated.
     def evaluated?; @__evaluated end
@@ -38,7 +55,7 @@ module Blur
       @__evaluated = false
       @__emissions = []
       
-      if evaluate and @__evaluated
+      if evaluate_source_file path
         cache.load if Cache.exists? @__name
 
         Emissions.each do |emission|
@@ -58,14 +75,38 @@ module Blur
     #       # …
     #     end
     #   end
-    def Script name, version = [1,0], author = nil, &block
-      @__name    = name
-      @__author  = author
-      @__version = version
+    def Script name, options = {}, &block
+      @__name = name
+
+      extensions = options[:using] || options[:uses] 
+
+      # Automatically used extensions.
+      if extensions
+        extensions.each {|extension_name| using extension_name }
+      end
+
+      # Automatically included modules.
+      if options[:includes]
+        options[:includes].each{|module_name| self.extend module_name }
+      end
       
       instance_eval &block
       
       true
+    end
+
+    # Add script extension and define a method with the same name as
+    # the extension.
+    def using *extension_names
+      extension_names.each do |extension_name|
+        if extension = @@__extensions.find{|ext| ext.__name.to_s == extension_name.to_s }
+          self.metaclass.send :define_method, :"#{extension_name}" do
+            return extension
+          end
+        else
+          raise ExtensionNotFoundError, "Extension not found: #{extension_name}"
+        end
+      end
     end
     
     # Unload the script and save the cache, if present.
@@ -91,16 +132,6 @@ module Blur
     # Convert it to a debug-friendly format.
     def inspect
       File.basename @__path
-    end
-    
-  private
-  
-    # Attempt to evaluate the contents of the script.
-    def evaluate
-      instance_eval File.read(@__path), File.basename(@__path), 0
-      @__evaluated = true
-    rescue Exception => exception
-      log.error "#{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
     end
   end
 end
