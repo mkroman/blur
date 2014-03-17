@@ -10,9 +10,9 @@ require 'eventmachine'
 
 # Require all library files.
 require 'blur/client'
-require 'blur/extension'
-require 'blur/script/dsl'
 require 'blur/evaluable'
+require 'blur/script/dsl'
+require 'blur/extension'
 require 'blur/script'
 require 'blur/network'
 require 'blur/encryption'

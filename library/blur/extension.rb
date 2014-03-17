@@ -20,7 +20,7 @@ module Blur
       @__path = path
 
       if evaluate_source_file path
-        puts "Evaluated extension #{@__path} …"
+        log.info "Loaded extension #{@__path}"
       end
     end
 
