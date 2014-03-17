@@ -40,6 +40,11 @@ module Blur
         @@__extensions << extension
       end
     end
+
+    # "Unload" all script extensions.
+    def self.unload_extensions!
+      @@__extensions.clear
+    end
     
     # Check to see if the script has been evaluated.
     def evaluated?; @__evaluated end
