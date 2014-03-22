@@ -7,6 +7,7 @@ module Blur
   class Extension
     include Evaluable
     include Script::DSL
+    include Logging
 
     # @return the path in which the script remains.
     attr_accessor :__path
