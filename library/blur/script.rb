@@ -101,6 +101,7 @@ module Blur
     def using *extension_names
       extension_names.each do |extension_name|
         if extension = @@__extensions.find{|ext| ext.__name.to_s == extension_name.to_s }
+          extension.extension_used self if extension.respond_to? :extension_used
           self.metaclass.send :define_method, :"#{extension_name}" do
             return extension
           end
