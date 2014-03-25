@@ -36,6 +36,7 @@ module Blur
       Dir.glob("#{root_path}/extensions/*.rb").each do |path|
         extension = Extension.new path
         extension.__client = self
+        extension.extension_loaded if extension.respond_to? :extension_loaded
         
         @@__extensions << extension
       end

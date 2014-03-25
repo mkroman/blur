@@ -56,8 +56,6 @@ module Blur
       # Extend +base+ with self.
       def self.extended base
         base.instance_variable_set :@__commands, []
-
-        p base.instance_variables
       end
 
       # Add a new command handler and trigger.

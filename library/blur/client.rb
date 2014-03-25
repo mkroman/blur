@@ -136,6 +136,7 @@ module Blur
             script.__send__ name, *args
           rescue Exception => exception
             log.error "#{File.basename(script.__path) << " - " << exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+            puts exception.backtrace.join "\n"
           end
         end
       end
