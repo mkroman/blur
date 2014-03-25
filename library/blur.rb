@@ -9,6 +9,7 @@ require 'openssl'
 require 'eventmachine'
 
 # Require all library files.
+require 'blur/version'
 require 'blur/client'
 require 'blur/evaluable'
 require 'blur/script/dsl'
@@ -29,9 +30,6 @@ require 'blur/script/commands'
 # It allows the developer to extend it in multiple ways.
 # It can be by handlers, scripts, communications, and what have you.
 module Blur
-  # The major and minor version-values of Blur.
-  Version = "1.8.1"
-
   # Instantiates a client with given options and then makes the client instance
   # evaluate the given block to form a DSL.
   #
