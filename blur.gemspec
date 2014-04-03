@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.license  = "MIT"
   spec.author   = "Mikkel Kroman"
   spec.email    = "mk@uplink.io"
-  spec.files    = Dir["library/**/*.rb"]
+  spec.files    = Dir["library/**/*.rb", "README.md", "LICENSE", ".yardopts"]
 
   spec.add_dependency "majic", ">= 0.2"
   spec.add_dependency "eventmachine", "> 0.12"
