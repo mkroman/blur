@@ -14,6 +14,10 @@ connection before Blur even broke a sweat - albeit I only have 20/2.
 I managed to connect with 5000 clones before it couldn't resolve the hostname
 anymore, while this is an excellent feature, I would not suggest doing it.
 
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/mkroman/blur/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+[![Build Status](https://travis-ci.org/mkroman/blur.svg?branch=isupport)](https://travis-ci.org/mkroman/blur)
+[![Dependency Status](https://gemnasium.com/mkroman/blur.svg)](https://gemnasium.com/mkroman/blur)
+
 Features
 --------
   * SSL/TLS encryption
