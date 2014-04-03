@@ -278,6 +278,11 @@ module Blur
         end
       end
 
+      # Called when the network announces its ISupport parameters.
+      def got_005 network, command
+
+      end
+
       alias_method :got_353, :got_name_reply
       alias_method :got_422, :got_end_of_motd
       alias_method :got_376, :got_end_of_motd
