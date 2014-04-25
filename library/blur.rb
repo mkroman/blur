@@ -22,6 +22,7 @@ require 'blur/script/cache'
 require 'blur/network/user'
 require 'blur/network/channel'
 require 'blur/network/command'
+require 'blur/network/isupport'
 require 'blur/network/connection'
 require 'blur/script/commands'
 

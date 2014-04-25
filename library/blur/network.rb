@@ -21,6 +21,8 @@ module Blur
     attr_accessor :delegate
     # @return [Network::Connection] the connection instance.
     attr_accessor :connection
+    # @return [Network::ISupport] the network isupport specs.
+    attr_accessor :isupport
 
     # Check whether or not connection is established.
     def connected?; @connection and @connection.established? end
@@ -56,6 +58,7 @@ module Blur
     def initialize options
       @options  = options
       @channels = []
+      @isupport = ISupport.new self
       
       unless options[:nickname]
         raise ArgumentError, "nickname is missing from the networks option block"
@@ -100,6 +103,27 @@ module Blur
       @channels.select { |channel| channel.user_by_nick nick }
     end
 
+    # Returns a list of user prefixes that a nick might contain.
+    #
+    # @return [Array<String>] a list of user prefixes.
+    def user_prefixes
+      isupport["PREFIX"].values
+    end
+
+    # Returns a list of user modes that also gives a users nick a prefix.
+    #
+    # @return [Array<String>] a list of user modes.
+    def user_prefix_modes
+      isupport["PREFIX"].keys
+    end
+
+    # Returns a list of channel flags (channel mode D).
+    #
+    # @return [Array<String>] a list of channel flags.
+    def channel_flags
+      isupport["CHANMODES"]["D"]
+    end
+
     # Attempt to establish a connection and send initial data.
     #
     # @see Connection
@@ -137,6 +161,7 @@ module Blur
       
       @connection.send_data "#{command}\r\n"
     end
+
     
     # Convert it to a debug-friendly format.
     def to_s
