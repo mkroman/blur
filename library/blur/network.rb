@@ -21,6 +21,8 @@ module Blur
     attr_accessor :delegate
     # @return [Network::Connection] the connection instance.
     attr_accessor :connection
+    # @return [Network::ISupport] the network isupport specs.
+    attr_accessor :isupport
 
     # Check whether or not connection is established.
     def connected?; @connection and @connection.established? end
@@ -56,6 +58,7 @@ module Blur
     def initialize options
       @options  = options
       @channels = []
+      @isupport = ISupport.new self
       
       unless options[:nickname]
         raise ArgumentError, "nickname is missing from the networks option block"

@@ -278,9 +278,11 @@ module Blur
         end
       end
 
-      # Called when the network announces its ISupport parameters.
+      # Called when the network announces its ISUPPORT parameters.
       def got_005 network, command
+        params = command.params[1..-2]
 
+        network.isupport.parse *params
       end
 
       alias_method :got_353, :got_name_reply

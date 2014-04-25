@@ -13,43 +13,89 @@ describe Blur::Network::ISupport do
     end
   end
 
-  describe "#parse_parameter" do
-    context "when the parameter is just a key" do
-      it "should not return a value" do
-        result = subject.send :parse_parameter, "SPAM"
+  describe "#parse" do
+    context "when given a param that needs special treatment" do
+      let(:params) { ["PREFIX=(qaohvV)~&@%+-", "SIMPLE=PARAM"] }
 
-        expect(result).to eq ["SPAM", nil]
+      it "should call the parser" do
+        stub = double
+        expect(stub).to receive(:call).once
+
+        stub_const "Blur::Network::ISupport::Parsers", { "PREFIX" => stub }
+
+        subject.parse *params
+      end
+
+      it "should successfully assign" do
+        old_prefix = subject["PREFIX"]
+
+        subject.parse *params
+
+        expect(subject["PREFIX"]).to_not be old_prefix
       end
     end
 
-    context "when the parameter is a key with no real value" do
-      it "should not return a value" do
-        result = subject.send :parse_parameter, "SPAM="
+    context "when given PREFIX" do
+      let(:params) { ["PREFIX=(qaohvV)~&@%+-", "SIMPLE=PARAM"] }
 
-        expect(result).to eq ["SPAM", nil]
+      it "should parse modes and prefixes" do
+        subject.parse *params
+
+        expect(subject['PREFIX']['V']).to eq '-'
       end
     end
 
-    context "when the parameter has a key and a value" do
-      it "should return the key and the value" do
-        result = subject.send :parse_parameter, "SPAM=yes"
+    context "when given CHANMODES" do
+      let(:params) { ["CHANMODES=Ibeg,k,FJLfjl,ABCDGKMNOPQRSTcimnprstu", "SIMPLE=PARAM"] }
 
-        expect(result).to eq ["SPAM", "yes"]
+      it "should parse and split modes" do
+        subject.parse *params
+
+        expect(subject['CHANMODES']).to include ?A, ?B, ?C, ?D
+      end
+
+      it "should parse and split modes into the right groups" do
+        subject.parse *params
+
+        chanmodes = subject["CHANMODES"]
+
+        expect(chanmodes["A"]).to include *"Ibeg".chars
+        expect(chanmodes["B"]).to include "k"
+        expect(chanmodes["C"]).to include *"FJLfjl".chars
+        expect(chanmodes["D"]).to include *"ABCDGKMNOPQRSTcimnprstu".chars
       end
     end
-  end
 
-  describe "#synchronize!" do
-    it "should extract the parameters as key-value pair" do
-      expect(subject).to receive(:parse_parameter).at_least(3).times
+    context "when given CHANLIMIT" do
+      let(:params) { ["CHANLIMIT=#+:10,&:", "SIMPLE=PARAM"] }
 
-      subject.synchronize! "CHANLIMIT=#:2,&:6", "SPAM", "PREFIX=(qaohvV)~&@%+-"
+      it "should parse and split modes into the right groups" do
+        subject.parse *params
+
+        chan_limit = subject["CHANLIMIT"]
+
+        expect(chan_limit).to include "+" => 10
+        expect(chan_limit).to include "#" => 10
+      end
+
+      it "should set an unspecified limit to infinite" do
+        subject.parse *params
+
+        chan_limit = subject["CHANLIMIT"]
+
+        expect(chan_limit).to include "&" => Float::INFINITY
+      end
     end
 
-    context "when CHANLIMIT is passed" do
-      it "should parse" do
+    context "when given a simple value-based parameter" do
+      let(:params) { ["SIMPLEVAR=SIMPLEVAL"] }
 
+      it "should successfully assign the value" do
+        subject.parse *params
+
+        expect(subject["SIMPLEVAR"]).to eq "SIMPLEVAL"
       end
+
     end
   end
 end
