@@ -103,6 +103,27 @@ module Blur
       @channels.select { |channel| channel.user_by_nick nick }
     end
 
+    # Returns a list of user prefixes that a nick might contain.
+    #
+    # @return [Array<String>] a list of user prefixes.
+    def user_prefixes
+      isupport["PREFIX"].values
+    end
+
+    # Returns a list of user modes that also gives a users nick a prefix.
+    #
+    # @return [Array<String>] a list of user modes.
+    def user_prefix_modes
+      isupport["PREFIX"].keys
+    end
+
+    # Returns a list of channel flags (channel mode D).
+    #
+    # @return [Array<String>] a list of channel flags.
+    def channel_flags
+      isupport["CHANMODES"]["D"]
+    end
+
     # Attempt to establish a connection and send initial data.
     #
     # @see Connection
@@ -140,6 +161,7 @@ module Blur
       
       @connection.send_data "#{command}\r\n"
     end
+
     
     # Convert it to a debug-friendly format.
     def to_s

@@ -47,7 +47,14 @@ module Blur
       # Called when the namelist of a channel was received.
       def got_name_reply network, command
         name  = command[2]
-        users = command[3].split.map &Network::User.method(:new)
+        users = command[3].split.map do |nick|
+          # Slice the nick if the first character is a user mode prefix.
+          if network.user_prefixes.include? nick.chr
+            nick.slice! 0
+          end
+
+          Network::User.new nick
+        end
         
         if channel = network.channel_by_name(name)
           users.each do |user|
