@@ -11,6 +11,8 @@ module Blur
     # @see EventMachine::Protocols::LineAndTextProtocol
     # @see EventMachine::Connection
     class Connection < EM::Protocols::LineAndTextProtocol
+      SSLValidationError = Class.new StandardError
+
       # Check whether or not connection is established.
       def established?; @connected == true end
 
@@ -26,13 +28,18 @@ module Blur
       # Called when a new connection is being set up, all we're going to use
       # it for is to enable SSL/TLS on our connection.
       def post_init
-        start_tls if @network.secure?
+        if @network.secure?
+          verify_peer = (@network.options[:ssl_no_verify] ? false : true)
+
+          start_tls verify_peer: verify_peer
+        end
       end
 
       # Called when a line was received, the connection sends it to the network
       # delegate which then sends it to the client.
       def receive_line line
         command = Command.parse line
+
         @network.got_command command
       end
 
@@ -44,9 +51,56 @@ module Blur
         connected!
       end
 
+      # Validates that the peer certificate has the correct fingerprint as
+      # specified in the :fingerprint :ssl option.
+      #
+      # @note This doesn't support intermediate certificate authorities!
+      # @raise [SSLValidationError] Raised if the specified fingerprint doesn't
+      # match the certificates.
+      def ssl_verify_peer peer_cert
+        ssl_cert_file    = @network.options[:ssl_cert_file]
+        peer_certificate = OpenSSL::X509::Certificate.new peer_cert
+
+        if ssl_cert_file
+          unless File.readable? ssl_cert_file
+            raise SSLValidationError, "Could not read the CA certificate file."
+
+            return false
+          end
+        end
+
+        if fingerprint_verification?
+          fingerprint = @network.options[:ssl_fingerprint].to_s
+          peer_fingerprint = cert_sha1_fingerprint peer_certificate
+
+          if fingerprint != peer_fingerprint
+            raise SSLValidationError,
+              "Expected fingerprint '#{fingerprint}', but got '#{peer_fingerprint}'"
+
+            return false
+          end
+        end
+
+        if certificate_verification?
+          ca_certificate = OpenSSL::X509::Certificate.new File.read ssl_cert_file
+          valid_signature = peer_certificate.verify ca_certificate.public_key
+
+          if not valid_signature
+            raise SSLValidationError, "Certificate verify failed"
+
+            return false
+          end
+        end
+
+        true
+      end
+
       # Called once the connection is finally established.
       def connection_completed
-        @network.connected! unless @network.secure?
+        # We aren't completely connected yet if the connection is encrypted.
+        unless @network.secure?
+          connected!
+        end
       end
 
       # Called just as the connection is being terminated, either by remote or
@@ -65,6 +119,33 @@ module Blur
 
         @network.connected!
       end
+
+      # Returns true if we're expected to verify the certificate fingerprint.
+      def fingerprint_verification?
+        not @network.options[:ssl_fingerprint].nil?
+      end
+
+      # Returns true if we should verify the peer certificate.
+      def certificate_verification?
+        not @network.options[:ssl_cert_file].nil?
+      end
+
+      # Get the hexadecimal representation of the certificates public key.
+      def cert_sha1_fingerprint certificate
+        fingerprint = OpenSSL::Digest::SHA1.hexdigest certificate.to_der
+
+        # Format it the same way OpenSSL does.
+        fingerprint = fingerprint.chars.each_slice(2).map(&:join).join ':'
+        fingerprint.upcase
+      end
+
+      def ssl_fingerprint_error! peer_fingerprint
+        fingerprint = @network.options[:ssl_fingerprint]
+
+        raise SSLValidationError,
+          "Expected fingerprint '#{fingerprint}' but got '#{peer_fingerprint}'"
+      end
+
     end
   end
 end

@@ -47,14 +47,27 @@ module Blur
 
     # Instantiates the network.
     #
-    # @param [Hash] options the network options.
-    # @option options [String] :hostname the remote hostname.
-    # @option options [String] :nickname the nickname to represent.
-    # @option options [optional, String] :username the username to represent.
-    # @option options [optional, String] :realname the “real name” to represent.
-    # @option options [optional, String] :password the password for the network.
-    # @option options [optional, Fixnum] :port the remote port.
-    # @option options [optional, Boolean] :secure use a secure connection.
+    # @param [Hash] options The network options.
+    # @option options [String] :hostname The hostname or IP-address we want to
+    #   connect to.
+    # @option options [String] :nickname The nickname to use.
+    # @option options [optional, String] :username (Copies :nickname)
+    #   The username to use. This is also known as the ident.
+    # @option options [optional, String] :realname (Copies :username)
+    #   The “real name” that we want to use. This is usually what shows up
+    #   as "Name" when you whois a user.
+    # @option options [optional, String] :password The password for the network.
+    #   This is sometimes needed for private networks.
+    # @option options [optional, Fixnum] :port (6697 if ssl, otherwise 6667) 
+    #   The remote port we want to connect to.
+    # @option options [optional, Boolean] :secure Set whether this is a secure
+    #   (SSL-encrypted) connection.
+    # @option options [optional, String] :ssl_cert_file Local path of a
+    #   readable file that contains a X509 CA certificate to validate against.
+    # @option options [optional, String] :ssl_fingerprint Validate that the 
+    #   remote certificate matches the specified fingerprint.
+    # @option options [optional, Boolean] :ssl_no_verify Disable verification
+    #   alltogether.
     def initialize options
       @options  = options
       @channels = []
