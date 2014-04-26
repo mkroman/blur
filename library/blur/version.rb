@@ -2,7 +2,7 @@
 
 module Blur
   # The current version of Blur.
-  Version = "1.8.2"
+  Version = "1.8.3"
 
   # Get the current version.
   #
