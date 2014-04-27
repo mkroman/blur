@@ -16,7 +16,8 @@ module Blur
     ExtensionNotFoundError = Class.new StandardError
     Emissions = [:connection_ready, :topic_change, :user_rename, :message,
                  :private_message, :user_entered, :user_left, :user_quit,
-                 :user_kicked, :topic, :user_mode, :channel_mode]
+                 :user_kicked, :topic, :user_mode, :channel_mode,
+                 :channel_created, :channel_who_reply]
 
     # @return the path in which the script remains.
     attr_accessor :__path

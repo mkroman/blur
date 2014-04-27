@@ -56,22 +56,15 @@ module Blur
           Network::User.new nick
         end
         
-        if channel = network.channel_by_name(name)
+        if channel = find_or_create_channel(name, network)
           users.each do |user|
             user.channel = channel
             user.network = network
 
             channel.users << user
           end
-        else
-          channel = Network::Channel.new name, network, users
 
-          if network.fish? and network.options[:fish].key? name
-            keyphrase = network.options[:fish][name]
-            channel.encryption = Encryption::FiSH.new keyphrase
-          end
-
-          network.channels << channel
+          emit :channel_who_reply, channel
         end
       end
       
@@ -82,21 +75,10 @@ module Blur
       def got_channel_topic network, command
         me, name, topic = command.params
         
-        if channel = network.channel_by_name(name)
+        if channel = find_or_create_channel(name, network)
           emit :topic_change, channel, topic
-          channel.topic = topic
-        else          
-          channel = Network::Channel.new name, network, []
 
-          if network.fish? and network.options[:fish].key? name
-            keyphrase = network.options[:fish][name]
-            channel.encryption = Encryption::FiSH.new keyphrase
-          end
-          
-          emit :topic_change, channel, topic
           channel.topic = topic
-          
-          network.channels << channel
         end
       end
       
@@ -296,6 +278,26 @@ module Blur
       alias_method :got_422, :got_end_of_motd
       alias_method :got_376, :got_end_of_motd
       alias_method :got_332, :got_channel_topic
+
+    private
+
+      def find_or_create_channel name, network, users = []
+        channel = network.channel_by_name(name)
+
+        unless channel
+          channel = Network::Channel.new name, network, users
+          network.channels << channel
+
+          if network.fish? and network.options[:fish].key? name
+            keyphrase = network.options[:fish][name]
+            channel.encryption = Encryption::FiSH.new keyphrase
+          end
+
+          emit :channel_created, channel
+
+          channel
+        end
+      end
     end
   end
 end
