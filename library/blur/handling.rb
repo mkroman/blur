@@ -282,9 +282,9 @@ module Blur
     private
 
       def find_or_create_channel name, network, users = []
-        channel = network.channel_by_name(name)
+        channel = network.channel_by_name name
 
-        unless channel
+        if channel.nil?
           channel = Network::Channel.new name, network, users
           network.channels << channel
 
@@ -294,9 +294,9 @@ module Blur
           end
 
           emit :channel_created, channel
-
-          channel
         end
+
+        channel
       end
     end
   end
