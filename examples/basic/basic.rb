@@ -21,19 +21,19 @@ options = {
 # @see Blur.connect
 Blur.connect options do
   # Raised once for every network upon successful connection.
-  catch :connection_ready do |network|
+  on :connection_ready do |network|
     log.info "Connection established and I'm ready for action!"
   end
 
   # Raised when a message is sent from inside a channel.
-  catch :message do |user, channel, message|
+  on :message do |user, channel, message|
     print Time.now.strftime("%I:%M:%S") + " "
     print "#{channel}:#{user}: "
     puts message
   end
 
   # Raised when a message is sent from a user outside of a channel.
-  catch :private_message do |user, message|
+  on :private_message do |user, message|
     user.say "Sorry, I do not handle personal business!"
   end
 end

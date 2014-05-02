@@ -8,6 +8,7 @@ module Blur
   # It stores networks, scripts and callbacks, and is also encharge of
   # distributing the incoming commands to the right networks and scripts.
   class Client
+    include Deferrable
     include Handling, Logging
     
     # @return [Array] the options that is passed upon initialization.
@@ -29,12 +30,10 @@ module Blur
       @networks  = []
       @callbacks = {}
       
-      @networks = @options[:networks].map {|options| Network.new options }
+      @networks = @options[:networks].map {|options| Network.new options, self }
       
       load_scripts
       trap 2, &method(:quit)
-
-      EventMachine.threadpool_size = 1
     end
     
     # Connect to each network available that is not already connected, then
@@ -43,12 +42,12 @@ module Blur
       networks = @networks.select {|network| not network.connected? }
       
       EventMachine.run do
-        networks.each do |network|
-          network.delegate = self
-          network.connect
-        end
+        networks.each &:connect
 
-        EventMachine.error_handler{|e| p e }
+        EventMachine.error_handler do |exception|
+          log.error "#{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+          puts exception.backtrace.join "\n"
+        end
       end
     end
     
@@ -114,42 +113,5 @@ module Blur
       
       EventMachine.stop
     end
-    
-  private    
-    # Finds all callbacks with name `name` and then calls them.
-    # It also sends `name` to {Script} if the script responds to `name`, to all
-    #   available scripts.
-    #
-    # @param [Symbol] name the corresponding event-handlers name.
-    # @param [...] args Arguments that is passed to the event-handler.
-    # @private
-    def emit name, *args
-      EM.defer do
-        @callbacks[name].each do |callback|
-          callback.call *args
-        end if @callbacks[name]
-
-        scripts = @scripts.select{|script| script.__emissions.include? name }
-        
-        scripts.each do |script|
-          begin
-            script.__send__ name, *args
-          rescue Exception => exception
-            log.error "#{File.basename(script.__path) << " - " << exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
-            puts exception.backtrace.join "\n"
-          end
-        end
-      end
-    end
-    
-    # Stores the block as an event-handler with name `name`.
-    #
-    # @param [Symbol] name the corresponding event-handlers name.
-    # @param [Block] block the event-handlers block that serves as a trigger.
-    # @private
-    def catch name, &block
-      (@callbacks[name] ||= []) << block
-    end
-    
   end
 end
