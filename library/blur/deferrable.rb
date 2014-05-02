@@ -22,11 +22,13 @@ module Blur
       def emit name, *args
         callbacks = self.callbacks[name]
 
-        return unless callbacks
+        return if callbacks.nil? or callbacks.empty?
 
-        callbacks.each do |callback|
-          callback.(*args)
-        end if callbacks.any?
+        EM.defer do
+          callbacks.each do |callback|
+            callback.(*args)
+          end
+        end
       end
 
       # Add a new event callback.

@@ -23,6 +23,7 @@ describe Blur::Deferrable do
 
     before do
       allow(subject).to receive(:callbacks).and_return callbacks
+      allow(EventMachine).to receive(:defer).and_yield
     end
 
     context "when there are no matching callbacks" do
