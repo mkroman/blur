@@ -19,10 +19,10 @@ describe Blur::Deferrable do
     let(:test_1) { double :test_1 }
     let(:test_2) { double :test_2 }
     let(:test_1_2) { double :test_1_2 }
-    let (:callbacks) { { test_1: [test_1, test_1_2], test_2: [test_2] } }
+    let(:callbacks) { { test_1: [test_1, test_1_2], test_2: [test_2] } }
 
     before do
-      allow(subject).to receive(:callbacks).and_return callbacks
+      Blur::Deferrable.class_variable_set :@@callbacks, callbacks
       allow(EventMachine).to receive(:defer).and_yield
     end
 
