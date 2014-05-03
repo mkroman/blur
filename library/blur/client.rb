@@ -28,7 +28,6 @@ module Blur
       @options   = options
       @scripts   = []
       @networks  = []
-      @callbacks = {}
       
       @networks = @options[:networks].map {|options| Network.new options, self }
       

@@ -6,26 +6,20 @@ module Blur
   # The {Script#Script} method is then used to shape the DSL-language to make
   # writing Blur scripts a breeze.
   #
-  # @todo add examples in the documentation
   # @see Script#Script
   class Script
+    include DSL
     include Logging
     include Evaluable
-    include DSL
+    include Deferrable
 
     ExtensionNotFoundError = Class.new StandardError
-    Emissions = [:connection_ready, :topic_change, :user_rename, :message,
-                 :private_message, :user_entered, :user_left, :user_quit,
-                 :user_kicked, :topic, :user_mode, :channel_mode,
-                 :channel_created, :channel_who_reply]
 
     # @return the path in which the script remains.
     attr_accessor :__path
     # Can be used inside the script to act with the client itself.
     # @return [Network::Client] the client delegate.
     attr_accessor :__client
-    # @return [Array] a list of handled emissions.
-    attr_accessor :__emissions
 
     # A list of extensions.
     @@__extensions = []
@@ -55,15 +49,10 @@ module Blur
     def initialize path
       @__path = path
       @__evaluated = false
-      @__emissions = []
       
       if evaluate_source_file path
         cache.load if Cache.exists? @__name
 
-        Emissions.each do |emission|
-          @__emissions.push emission if respond_to? emission
-        end
-        
         __send__ :loaded if respond_to? :loaded
         __send__ :module_init if respond_to? :module_init
       end
