@@ -9,121 +9,24 @@ module Blur
   # @see Script#Script
   class Script
     include DSL
-    include Logging
-    include Evaluable
-    include Deferrable
 
-    ExtensionNotFoundError = Class.new StandardError
-
-    # @return the path in which the script remains.
-    attr_accessor :__path
-    # Can be used inside the script to act with the client itself.
-    # @return [Network::Client] the client delegate.
-    attr_accessor :__client
-
-    # A list of extensions.
-    @@__extensions = []
-
-    # Find and evaluate script extensions.
-    def self.load_extensions!
-      root_path = File.dirname $0
-      
-      Dir.glob("#{root_path}/extensions/*.rb").each do |path|
-        extension = Extension.new path
-        extension.__client = self
-        extension.extension_loaded if extension.respond_to? :extension_loaded
-        
-        @@__extensions << extension
-      end
-    end
-
-    # "Unload" all script extensions.
-    def self.unload_extensions!
-      @@__extensions.clear
-    end
-    
-    # Check to see if the script has been evaluated.
-    def evaluated?; @__evaluated end
-    
-    # Instantiates a script and evaluates the contents which remain in +path+.
-    def initialize path
-      @__path = path
-      @__evaluated = false
-      
-      if evaluate_source_file path
-        cache.load if Cache.exists? @__name
-
-        __send__ :loaded if respond_to? :loaded
-        __send__ :module_init if respond_to? :module_init
-      end
-    end
-    
-    # Make it a DSL-way of writing a script.
+    # Get the script name.
     #
-    # @example
-    #   Script :example do
-    #     def connection_ready network
-    #       # …
-    #     end
-    #   end
-    def Script name, options = {}, &block
-      @__name = name
-
-      extensions = options[:using] || options[:uses] 
-
-      # Automatically used extensions.
-      if extensions
-        extensions.each {|extension_name| using extension_name }
-      end
-
-      # Automatically included modules.
-      if options[:includes]
-        options[:includes].each{|module_name| self.extend module_name }
-      end
-      
-      instance_eval &block
-      
-      true
+    # @return [Symbol] the script name.
+    def self.name
+      class_variable_get :@@name
     end
 
-    # Add script extension and define a method with the same name as
-    # the extension.
-    def using *extension_names
-      extension_names.each do |extension_name|
-        if extension = @@__extensions.find{|ext| ext.__name.to_s == extension_name.to_s }
-          extension.extension_used self if extension.respond_to? :extension_used
-          self.metaclass.send :define_method, :"#{extension_name}" do
-            return extension
-          end
-        else
-          raise ExtensionNotFoundError, "Extension not found: #{extension_name}"
-        end
-      end
-    end
-    
-    # Unload the script and save the cache, if present.
-    def unload!
-      cache.save if @__cache
-      __send__ :unloaded if respond_to? :unloaded
-
-      @__cache = nil
+    def self.inspect
+      %%#<Blur::Script #{name}>%
     end
 
-    # Access another script with name +name+.
-    #
-    # @return [Script] the script with the name +name+, or nil.
-    def script name
-      @__client.scripts.find { |script| script.__name == name }
+    def initialize
     end
-    
-    # Get the cache, if none, instantiate a new cache.
-    def cache
-      @__cache ||= Cache.new self
-    end
-    
-    # Convert it to a debug-friendly format.
-    def inspect
-      File.basename @__path
+
+    def name
+      @@name
+      #self.class.class_variable_get :@@name
     end
   end
 end

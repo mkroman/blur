@@ -7,10 +7,13 @@ require 'socket'
 require 'ostruct'
 require 'openssl'
 require 'eventmachine'
+require 'active_support/inflector'
 
 # Require all library files.
 require 'blur/version'
 require 'blur/deferrable'
+require 'blur/meta_class'
+require 'blur/scope'
 require 'blur/client'
 require 'blur/evaluable'
 require 'blur/script/dsl'
