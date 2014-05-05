@@ -13,8 +13,8 @@ module Blur
     
     # @return [Array] the options that is passed upon initialization.
     attr_accessor :options
-    # @return [Array] a list of scripts that is loaded during runtime.
-    attr_accessor :scripts
+    # @return [Array] a list of scopes that is loaded during runtime.
+    attr_accessor :scopes
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
     
@@ -25,13 +25,17 @@ module Blur
     # @option options [Array] networks list of hashes that contain network
     #   options.
     def initialize options
-      @options   = options
+      @scopes    = []
       @scripts   = []
+      @options   = options
       @networks  = []
       
       @networks = @options[:networks].map {|options| Network.new options, self }
       
-      load_scripts
+      load_scripts!
+      p @scopes
+
+      instantiate_scripts!
       trap 2, &method(:quit)
     end
     
@@ -66,18 +70,28 @@ module Blur
     end
     
     # Searches for scripts in working_directory/scripts and then loads them.
-    def load_scripts
-      # Load script extensions.
-      Script.load_extensions!
-
+    def load_scripts!
       # Load the scripts.
       script_path = File.dirname $0
       
       Dir.glob("#{script_path}/scripts/*.rb").each do |path|
-        script = Script.new path
-        script.__client = self
-        
-        @scripts << script
+        begin
+          scope = Scope.eval_file path
+          
+          @scopes << scope
+        rescue => exception
+          puts "Failed to load script (#{path}): #{exception}"
+          puts exception.backtrace
+        end
+      end
+    end
+
+    # Instantiates the currently loaded scripts.
+    def instantiate_scripts!
+      @scopes.map(&:scripts).flatten.each do |klass|
+        @scripts << klass.new.tap do |script|
+          script.post_init
+        end
       end
     end
     

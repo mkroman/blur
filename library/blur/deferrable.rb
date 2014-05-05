@@ -12,6 +12,10 @@ module Blur
       @@callbacks
     end
 
+    def self.included base
+      #base.extend self
+    end
+
     # Emit a new event with given arguments.
     #
     # @param name [Symbol] The event name.

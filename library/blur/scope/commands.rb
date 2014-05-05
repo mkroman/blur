@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 module Blur
-  class Script
+  class Scope < Module
     # The +Commands+ module is a module that gives the ability to turn a
     # script into a DSL-like framework.
     module Commands
@@ -53,24 +53,37 @@ module Blur
         end
       end
 
-      # Extend +base+ with self.
-      def self.extended base
-        base.instance_variable_set :@__commands, []
+      module ClassMethods
+        def commands
+          @@__commands ||= []
+        end
+
+        # Add a new command handler and trigger.
+        def command name, *args, &block
+          commands << Command.new(name, *args, &block)
+        end
       end
 
-      # Add a new command handler and trigger.
-      def command name, *args, &block
-        @__commands << Command.new(name, *args, &block)
+      def self.included base
+        base.extend ClassMethods
       end
-      
-      # Handle all calls to the scripts +message+ method, check to see if
-      # the message containts a valid command, serialize it and pass it to
-      # the script as command_name with the parameters +user+, +channel+
-      # and +message+.
-      def message user, channel, line
-        @__commands.each do |command|
-          command.received_message user, channel, line
+
+      def commands
+        @commands # class_variable_get :@@__commands
+      end
+
+      def post_init
+        super
+
+        @commands = self.class.commands.dup
+        self.class.commands.clear
+
+        on :message do |user, channel, line|
+          commands.each do |command|
+            command.received_message user, channel, line
+          end
         end
+
       end
     end
   end

@@ -9,6 +9,7 @@ module Blur
   # @see Script#Script
   class Script
     include DSL
+    include Deferrable
 
     # Get the script name.
     #
@@ -21,12 +22,7 @@ module Blur
       %%#<Blur::Script #{name}>%
     end
 
-    def initialize
-    end
-
-    def name
-      @@name
-      #self.class.class_variable_get :@@name
+    def post_init
     end
   end
 end

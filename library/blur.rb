@@ -7,15 +7,12 @@ require 'socket'
 require 'ostruct'
 require 'openssl'
 require 'eventmachine'
-require 'active_support/inflector'
 
 # Require all library files.
 require 'blur/version'
 require 'blur/deferrable'
-require 'blur/meta_class'
 require 'blur/scope'
 require 'blur/client'
-require 'blur/evaluable'
 require 'blur/script/dsl'
 require 'blur/extension'
 require 'blur/script'
@@ -28,7 +25,7 @@ require 'blur/network/channel'
 require 'blur/network/command'
 require 'blur/network/isupport'
 require 'blur/network/connection'
-require 'blur/script/commands'
+require 'blur/scope/commands'
 
 # Blur is a very modular IRC-framework for ruby.
 #

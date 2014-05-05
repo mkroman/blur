@@ -21,20 +21,24 @@ module Blur
       end
     end
 
+    def self.add_module modul, name = nil
+      if name
+        self.const_set name, modul
+      else
+        name = modul.name.split('::').last
+
+        self.const_set name, modul
+      end
+    end
+
     # Return a list of scripts defined in this scope.
     #
     # @return [Array<Script>] a list of scripts.
     attr_accessor :scripts
 
-    # Return a list of extensions defined in this scope.
-    #
-    # @return [Array<Extension>] a list of extensions.
-    attr_accessor :extensions
-
     # Constructor for a new scope.
     def initialize
       @scripts = []
-      @extensions = []
     end
 
     # Create a new metaclass for evaluating a script block.
@@ -50,24 +54,9 @@ module Blur
       scripts << klass
     end
 
-    # Create a new metaclass and evaluate an extension block.
-    #
-    # This method is the entry point of our extension DSL.
-    #
-    # @return [Array<Extension>] the list of extensions.
-    def Extension name, *args, &block
-      options = args.pop if args.list.is_a? Hash
-
-      klass = Class.new MetaClass
-      klass.class_variable_set :@@name, name
-      klass.class_eval &block
-
-      extensions << klass
-    end
-
     # Inspect the object.
     def inspect
-      %%#<Blur::Scope @scripts=#{@scripts.inspect} @extensions=#{@extensions.inspect}>%
+      %%#<Blur::Scope @scripts=#{@scripts.inspect}>%
     end
 
     # Inspect the object.
