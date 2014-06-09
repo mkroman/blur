@@ -90,15 +90,14 @@ module Blur
       # Called when a user changed nickname.
       #
       # == Callbacks:
-      # Emits :user_rename with the parameters +channel+, +user+ and +nickname+ 
-      # where +nickname+ is the new name.
+      # Emits :user_rename with the parameters +channel+, +user+, +old_nick and +new_nick+ 
       def got_nick network, command
         nick = command.sender.nickname
         
         if channels = network.channels_with_user(nick)
           channels.each do |channel|
             if user = channel.user_by_nick(nick)
-              emit :user_rename, channel, user, command[0]
+              emit :user_rename, channel, user, user.nick, command[0]
               user.nick = command[0]
             end
           end
@@ -257,12 +256,12 @@ module Blur
             end
 
             if user = channel.user_by_nick(nick)
-              emit :user_mode, user, modes
               user.merge_modes modes
+              emit :user_mode, user, modes
             end
           else
-            emit :channel_mode, channel, modes
             channel.merge_modes modes
+            emit :channel_mode, channel, modes
           end
         end
       end
