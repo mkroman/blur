@@ -105,12 +105,12 @@ module Blur
     #
     # @param [optional, Symbol] signal The signal received by the system, if any.
     def quit signal = :SIGINT
+      unload_scripts
+      
       @networks.each do |network|
         network.transmit :QUIT, "Got SIGINT?"
         network.disconnect
       end
-      
-      unload_scripts
       
       EventMachine.stop
     end
