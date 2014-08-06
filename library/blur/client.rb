@@ -68,9 +68,6 @@ module Blur
     
     # Searches for scripts in working_directory/scripts and then loads them.
     def load_scripts
-      # Load script extensions.
-      Script.load_extensions!
-
       # Load the scripts.
       script_path = File.dirname $0
       
@@ -86,9 +83,6 @@ module Blur
     #
     # @see Script#unload!
     def unload_scripts
-      # Unload script extensions.
-      Script.unload_extensions!
-
       @scripts.each do |script|
         script.unload!
       end.clear
