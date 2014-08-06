@@ -10,6 +10,7 @@ require 'eventmachine'
 
 # Require all library files.
 require 'blur/version'
+require 'blur/deferrable'
 require 'blur/client'
 require 'blur/evaluable'
 require 'blur/script/dsl'

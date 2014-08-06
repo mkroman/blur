@@ -21,7 +21,7 @@ options = {
 # @see Blur.connect
 Blur.connect options do
   # Raised once for every network upon successful connection.
-  catch :connection_ready do |network|
+  on :connection_ready do |network|
     log.info "Connection established and I'm ready for action!"
   end
 end

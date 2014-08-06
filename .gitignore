@@ -3,3 +3,4 @@ Gemfile.lock
 documentation/
 *.sublime-project
 *.sublime-workspace
+.bundle/
