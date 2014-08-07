@@ -76,7 +76,7 @@ module Blur
         me, name, topic = command.params
         
         if channel = find_or_create_channel(name, network)
-          emit :topic_change, channel, topic
+          emit :channel_topic, channel, topic
 
           channel.topic = topic
         end
@@ -85,6 +85,8 @@ module Blur
       # Called when the server needs to verify that we're alive.
       def got_ping network, command
         network.transmit :PONG, command[0]
+
+        emit :network_ping, command[0]
       end
       
       # Called when a user changed nickname.
@@ -97,8 +99,8 @@ module Blur
         if channels = network.channels_with_user(nick)
           channels.each do |channel|
             if user = channel.user_by_nick(nick)
-              emit :user_rename, channel, user, user.nick, command[0]
               user.nick = command[0]
+              emit :user_rename, channel, user, command[0]
             end
           end
         end

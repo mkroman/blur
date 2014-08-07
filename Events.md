@@ -42,6 +42,11 @@ followed by a verb describing the event.
 
   Arguments: channel (Network::Channel), user (Network::User), new_nick (String)
 
+### `:private_message`
+  Called when a user sends a private message.
+
+  Arguments: user (Network::User), message (String)
+
 ## Channel events
 
 ### `:channel_create` 
@@ -64,6 +69,18 @@ followed by a verb describing the event.
   Called when the channel changes topic.
 
   Arguments: channel (Network::Channel), new_topic (String)
+
+### `:message`
+  Called when a channel-wide message was sent.
+
+  Arguments: sender (Network::User), channel (Network::Channel), message (String)
+
+## Network events
+
+### `:network_ping`
+  Called when a PING message is received.
+
+  Arguments: whatever was sent by the server.
 
 ## Script events
 
