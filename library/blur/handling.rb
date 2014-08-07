@@ -124,18 +124,6 @@ module Blur
             user.name = command.sender.username
             user.host = command.sender.hostname
 
-            begin
-              if message[0..3] == "+OK " and channel.encrypted?
-                message = channel.encryption.decrypt message[4..-1]
-              end
-            rescue Encryption::BadInputError
-              puts "-!- FiSH: #{$!.message}"
-            rescue => exception
-              puts "-!- There was a problem with the FiSH encryption, disabling"
-
-              channel.encryption = nil
-            end
-            
             emit :message, user, channel, message
           else
             # Odd… this shouldn't happen
@@ -288,11 +276,6 @@ module Blur
         if channel.nil?
           channel = Network::Channel.new name, network, users
           network.channels << channel
-
-          if network.fish? and network.options[:fish].key? name
-            keyphrase = network.options[:fish][name]
-            channel.encryption = Encryption::FiSH.new keyphrase
-          end
 
           emit :channel_created, channel
         end
