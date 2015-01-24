@@ -8,13 +8,13 @@ module Blur
   # It stores networks, scripts and callbacks, and is also encharge of
   # distributing the incoming commands to the right networks and scripts.
   class Client
-    include Deferrable
+    include Callbacks
     include Handling, Logging
     
     # @return [Array] the options that is passed upon initialization.
     attr_accessor :options
-    # @return [Array] a list of scripts that is loaded during runtime.
-    attr_accessor :scripts
+    # @return [Array] a list of scopes that is loaded during runtime.
+    attr_accessor :scopes
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
     
@@ -25,14 +25,14 @@ module Blur
     # @option options [Array] networks list of hashes that contain network
     #   options.
     def initialize options
-      @options   = options
+      @scope     = Scope.new self
       @scripts   = []
+      @options   = options
       @networks  = []
-      @callbacks = {}
       
-      @networks = @options[:networks].map {|options| Network.new options }
+      @networks = @options[:networks].map {|options| Network.new options, self }
       
-      load_scripts
+      load_scripts!
       trap 2, &method(:quit)
     end
     
@@ -42,12 +42,12 @@ module Blur
       networks = @networks.select {|network| not network.connected? }
       
       EventMachine.run do
-        networks.each do |network|
-          network.delegate = self
-          network.connect
-        end
+        networks.each &:connect
 
-        EventMachine.error_handler{|e| p e }
+        EventMachine.error_handler do |exception|
+          log.error "#{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+          puts exception.backtrace.join "\n"
+        end
       end
     end
     
@@ -67,15 +67,17 @@ module Blur
     end
     
     # Searches for scripts in working_directory/scripts and then loads them.
-    def load_scripts
+    def load_scripts!
       # Load the scripts.
       script_path = File.dirname $0
       
       Dir.glob("#{script_path}/scripts/*.rb").each do |path|
-        script = Script.new path
-        script.__client = self
-        
-        @scripts << script
+        begin
+          @scope.eval_file path
+        rescue => exception
+          puts "Error occured when loading script `#{path}': #{exception}"
+          puts exception.backtrace
+        end
       end
     end
     

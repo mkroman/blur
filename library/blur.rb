@@ -1,18 +1,17 @@
 # encoding: utf-8
 
-require 'pp'
 require 'yaml'
-require 'majic'
 require 'socket'
 require 'ostruct'
 require 'openssl'
 require 'eventmachine'
 
 # Require all library files.
+require 'blur/logging'
 require 'blur/version'
-require 'blur/deferrable'
+require 'blur/callbacks'
+require 'blur/scope'
 require 'blur/client'
-require 'blur/evaluable'
 require 'blur/script/dsl'
 require 'blur/script'
 require 'blur/network'
@@ -23,7 +22,6 @@ require 'blur/network/channel'
 require 'blur/network/command'
 require 'blur/network/isupport'
 require 'blur/network/connection'
-require 'blur/script/commands'
 
 # Blur is a very modular IRC-framework for ruby.
 #

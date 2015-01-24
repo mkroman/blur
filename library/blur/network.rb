@@ -17,8 +17,8 @@ module Blur
     attr_accessor :channels
     # @return [Array] the list of private messages the client remembers.
     attr_accessor :dialogues
-    # @return [Client] the client delegate.
-    attr_accessor :delegate
+    # @return [Client] the client reference.
+    attr_accessor :client
     # @return [Network::Connection] the connection instance.
     attr_accessor :connection
     # @return [Network::ISupport] the network isupport specs.
@@ -68,7 +68,8 @@ module Blur
     #   remote certificate matches the specified fingerprint.
     # @option options [optional, Boolean] :ssl_no_verify Disable verification
     #   alltogether.
-    def initialize options
+    def initialize options, client = nil
+      @client   = client
       @options  = options
       @channels = []
       @isupport = ISupport.new self
@@ -96,7 +97,7 @@ module Blur
     
     # Called when the network connection has enough data to form a command.
     def got_command command
-      @delegate.got_command self, command
+      @client.got_command self, command
     end
     
     # Find a channel by its name.
@@ -104,7 +105,7 @@ module Blur
     # @param [String] name the channel name.
     # @return [Network::Channel] the matching channel, or nil.
     def channel_by_name name
-      @channels.find { |channel| channel.name == name }
+      @channels.find {|channel| channel.name == name }
     end
     
     # Find all instances of channels in which there is a user with the nick
@@ -113,7 +114,7 @@ module Blur
     # @param [String] nick the nickname.
     # @return [Array] a list of channels in which the user is located, or nil.
     def channels_with_user nick
-      @channels.select { |channel| channel.user_by_nick nick }
+      @channels.select {|channel| channel.user_by_nick nick }
     end
 
     # Returns a list of user prefixes that a nick might contain.
@@ -153,10 +154,10 @@ module Blur
 
     # Called when the connection was closed.
     def disconnected!
-      @channels.each { |channel| channel.users.clear }
+      @channels.each {|channel| channel.users.clear }
       @channels.clear
 
-      @delegate.network_connection_closed self
+      @client.network_connection_closed self
     end
     
     # Terminate the connection and clear all channels and users.
@@ -175,7 +176,6 @@ module Blur
       @connection.send_data "#{command}\r\n"
     end
 
-    
     # Convert it to a debug-friendly format.
     def to_s
       %{#<#{self.class.name} "#{host}":#{port}>}
