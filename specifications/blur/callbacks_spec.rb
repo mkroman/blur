@@ -1,11 +1,11 @@
 require_relative '../spec_helper'
 
-class DeferrableStub
-  include Blur::Deferrable
+class CallbacksStub
+  include Blur::Callbacks
 end
 
-describe Blur::Deferrable do
-  subject { DeferrableStub.new }
+describe Blur::Callbacks do
+  subject { CallbacksStub.new }
 
   describe "included" do
     it "should initialise @callbacks" do
@@ -22,7 +22,7 @@ describe Blur::Deferrable do
     let(:callbacks) { { test_1: [test_1, test_1_2], test_2: [test_2] } }
 
     before do
-      Blur::Deferrable.class_variable_set :@@callbacks, callbacks
+      Blur::Callbacks.class_variable_set :@@callbacks, callbacks
       allow(EventMachine).to receive(:defer).and_yield
     end
 
