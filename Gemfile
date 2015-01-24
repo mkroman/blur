@@ -1,9 +1,9 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gem "majic"
-gem "eventmachine"
+gem 'eventmachine', '~> 1.0.0'
 
 group :test do
-  gem "rspec"
-  gem "guard-rspec", require: false
+  gem 'pry'
+  gem 'rspec'
+  gem 'guard-rspec', require: false
 end
