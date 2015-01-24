@@ -76,7 +76,7 @@ module Blur
         me, name, topic = command.params
         
         if channel = find_or_create_channel(name, network)
-          emit :topic_change, channel, topic
+          emit :channel_topic, channel, topic
 
           channel.topic = topic
         end
@@ -85,6 +85,8 @@ module Blur
       # Called when the server needs to verify that we're alive.
       def got_ping network, command
         network.transmit :PONG, command[0]
+
+        emit :network_ping, command[0]
       end
       
       # Called when a user changed nickname.
@@ -97,8 +99,8 @@ module Blur
         if channels = network.channels_with_user(nick)
           channels.each do |channel|
             if user = channel.user_by_nick(nick)
-              emit :user_rename, channel, user, user.nick, command[0]
               user.nick = command[0]
+              emit :user_rename, channel, user, command[0]
             end
           end
         end
@@ -122,18 +124,6 @@ module Blur
             user.name = command.sender.username
             user.host = command.sender.hostname
 
-            begin
-              if message[0..3] == "+OK " and channel.encrypted?
-                message = channel.encryption.decrypt message[4..-1]
-              end
-            rescue Encryption::BadInputError
-              puts "-!- FiSH: #{$!.message}"
-            rescue => exception
-              puts "-!- There was a problem with the FiSH encryption, disabling"
-
-              channel.encryption = nil
-            end
-            
             emit :message, user, channel, message
           else
             # Odd… this shouldn't happen
@@ -286,11 +276,6 @@ module Blur
         if channel.nil?
           channel = Network::Channel.new name, network, users
           network.channels << channel
-
-          if network.fish? and network.options[:fish].key? name
-            keyphrase = network.options[:fish][name]
-            channel.encryption = Encryption::FiSH.new keyphrase
-          end
 
           emit :channel_created, channel
         end

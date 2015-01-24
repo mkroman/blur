@@ -8,6 +8,7 @@ module Blur
   # It stores networks, scripts and callbacks, and is also encharge of
   # distributing the incoming commands to the right networks and scripts.
   class Client
+    include Deferrable
     include Handling, Logging
     
     # @return [Array] the options that is passed upon initialization.
@@ -33,8 +34,6 @@ module Blur
       
       load_scripts
       trap 2, &method(:quit)
-
-      EventMachine.threadpool_size = 1
     end
     
     # Connect to each network available that is not already connected, then
@@ -69,9 +68,6 @@ module Blur
     
     # Searches for scripts in working_directory/scripts and then loads them.
     def load_scripts
-      # Load script extensions.
-      Script.load_extensions!
-
       # Load the scripts.
       script_path = File.dirname $0
       
@@ -87,9 +83,6 @@ module Blur
     #
     # @see Script#unload!
     def unload_scripts
-      # Unload script extensions.
-      Script.unload_extensions!
-
       @scripts.each do |script|
         script.unload!
       end.clear
@@ -114,42 +107,5 @@ module Blur
       
       EventMachine.stop
     end
-    
-  private    
-    # Finds all callbacks with name `name` and then calls them.
-    # It also sends `name` to {Script} if the script responds to `name`, to all
-    #   available scripts.
-    #
-    # @param [Symbol] name the corresponding event-handlers name.
-    # @param [...] args Arguments that is passed to the event-handler.
-    # @private
-    def emit name, *args
-      EM.defer do
-        @callbacks[name].each do |callback|
-          callback.call *args
-        end if @callbacks[name]
-
-        scripts = @scripts.select{|script| script.__emissions.include? name }
-        
-        scripts.each do |script|
-          begin
-            script.__send__ name, *args
-          rescue Exception => exception
-            log.error "#{File.basename(script.__path) << " - " << exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
-            puts exception.backtrace.join "\n"
-          end
-        end
-      end
-    end
-    
-    # Stores the block as an event-handler with name `name`.
-    #
-    # @param [Symbol] name the corresponding event-handlers name.
-    # @param [Block] block the event-handlers block that serves as a trigger.
-    # @private
-    def catch name, &block
-      (@callbacks[name] ||= []) << block
-    end
-    
   end
 end
