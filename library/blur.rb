@@ -1,16 +1,15 @@
 # encoding: utf-8
 
-require 'pp'
 require 'yaml'
-require 'majic'
 require 'socket'
 require 'ostruct'
 require 'openssl'
 require 'eventmachine'
 
 # Require all library files.
+require 'blur/logging'
 require 'blur/version'
-require 'blur/deferrable'
+require 'blur/callbacks'
 require 'blur/scope'
 require 'blur/client'
 require 'blur/script/dsl'

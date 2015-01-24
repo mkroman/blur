@@ -1,19 +1,15 @@
 # encoding: utf-8
 
 module Blur
-  module Deferrable
+  module Callbacks
     # Our list of callbacks.
     @@callbacks = {}
 
-    # Return the list of callbacks registered.
+    # Get a list of callbacks registered.
     #
-    # If the callbacks stack isn't already initialized, then initialize it.
+    # @returns [Array] the list of callbacks
     def callbacks
       @@callbacks
-    end
-
-    def self.included base
-      #base.extend self
     end
 
     # Emit a new event with given arguments.
@@ -26,9 +22,7 @@ module Blur
       return if callbacks.nil? or callbacks.empty?
 
       EM.defer do
-        callbacks.each do |callback|
-          callback.(*args)
-        end
+        callbacks.each {|callback| callback.(*args) }
       end
     end
 

@@ -8,7 +8,7 @@ module Blur
   # It stores networks, scripts and callbacks, and is also encharge of
   # distributing the incoming commands to the right networks and scripts.
   class Client
-    include Deferrable
+    include Callbacks
     include Handling, Logging
     
     # @return [Array] the options that is passed upon initialization.

@@ -9,7 +9,7 @@ module Blur
   # @see Script#Script
   class Script
     include DSL
-    include Deferrable
+    include Callbacks
 
     # Get the script name.
     #
