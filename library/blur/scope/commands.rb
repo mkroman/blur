@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 module Blur
-  class Scope < Module
+  class Scope
     # The +Commands+ module is a module that gives the ability to turn a
     # script into a DSL-like framework.
     module Commands

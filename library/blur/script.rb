@@ -2,11 +2,6 @@
 
 module Blur
   # The +Script+ class is used for encapsulating dynamically loaded ruby scripts.
-  #
-  # The {Script#Script} method is then used to shape the DSL-language to make
-  # writing Blur scripts a breeze.
-  #
-  # @see Script#Script
   class Script
     include DSL
     include Callbacks
@@ -18,11 +13,26 @@ module Blur
       class_variable_get :@@name
     end
 
-    def self.inspect
-      %%#<Blur::Script #{name}>%
+    # Called when a new script block is called.
+    #
+    # @param args the extra arguments to the Script block.
+    def self.script_init *args
+      options = args.pop if args.last.is_a? Hash
     end
 
-    def post_init
+    # Inspect the script class.
+    def self.inspect
+      %%#<Blur::Script @@name=#{name.inspect}>%
+    end
+
+    # Inspect the script instance.
+    def inspect
+      %%#<Blur::Script::0x#{object_id.to_s 16}(#{@@name})>%
+    end
+
+    # Inspect the script instance.
+    def to_s
+      inspect
     end
   end
 end

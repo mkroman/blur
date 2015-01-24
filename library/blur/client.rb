@@ -25,7 +25,7 @@ module Blur
     # @option options [Array] networks list of hashes that contain network
     #   options.
     def initialize options
-      @scopes    = []
+      @scope     = Scope.new self
       @scripts   = []
       @options   = options
       @networks  = []
@@ -33,9 +33,7 @@ module Blur
       @networks = @options[:networks].map {|options| Network.new options, self }
       
       load_scripts!
-      p @scopes
 
-      instantiate_scripts!
       trap 2, &method(:quit)
     end
     
@@ -76,21 +74,10 @@ module Blur
       
       Dir.glob("#{script_path}/scripts/*.rb").each do |path|
         begin
-          scope = Scope.eval_file path
-          
-          @scopes << scope
+          @scope.eval_file path
         rescue => exception
-          puts "Failed to load script (#{path}): #{exception}"
+          puts "Error occured when loading script `#{path}': #{exception}"
           puts exception.backtrace
-        end
-      end
-    end
-
-    # Instantiates the currently loaded scripts.
-    def instantiate_scripts!
-      @scopes.map(&:scripts).flatten.each do |klass|
-        @scripts << klass.new.tap do |script|
-          script.post_init
         end
       end
     end
@@ -99,9 +86,6 @@ module Blur
     #
     # @see Script#unload!
     def unload_scripts
-      # Unload script extensions.
-      Script.unload_extensions!
-
       @scripts.each do |script|
         script.unload!
       end.clear
