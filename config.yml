@@ -1,0 +1,65 @@
+## Blur configuration file
+
+production: &base
+  ## Blur client settings
+  blur:
+    # Save cached script variables in this directory
+    cache_path: cache/
+    # Where to look for scripts to be loaded
+    scripts_path: scripts/
+
+    # Default settings inherited by networks (with '<<: *defaults')
+    defaults: &defaults
+      nickname: hello-world
+      username: john doe
+
+    ## Network settings
+    # Set up a list of networks to connect to on start
+    networks:
+    - &quakenet
+      <<: *defaults
+      hostname: irc.quakenet.org
+      nickname: basic-example
+      channels:
+      - "#channel1"
+      - "#channel2"
+    - &uplink
+      <<: *defaults
+      hostname: irc.uplink.io
+      nickname: basic-example
+      secure: true
+      port: 6697
+      channels:
+      - "#channel1"
+      - "#channel2"
+
+  ## Script settings
+  scripts:
+    ## Admin authentication script settings
+    auth:
+      # Set default admins (this will be cached once the script has loaded at
+      # least once, after that it's no longer used as long as the cache exists.)
+      #
+      # The format is a hostmask, i.e. `<nick>!<ident>@<host>`
+      admins:
+      # - mk!mk@uplink.io
+      # - mk!mk@maero.dk
+
+    ## Wolfram|Alpha script settings
+    wolfram_alpha:
+      # Wolfram|Alpha API key -- to sign up for one, visit the developer portal
+      # at https://developer.wolframalpha.com/portal/apisignup.html
+      api_key: my_api_key_here
+
+# Development-specific settings. This merges values with base (i.e. the
+# production configuration above.)
+development:
+  <<: *base
+  blur:
+    networks:
+    - hostname: irc.uplink.io
+      nickname: blur-dev
+      channels: 
+      - "#blur"
+      secure: true
+      port: 6667
