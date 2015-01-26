@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+$:.unshift File.dirname(__FILE__) + '/../library'
+
+if ARGV.count < 1
+  puts "Usage: #$0 <config>"
+  puts
+  puts "For more options, please run #$0 --help"
+  exit 1
+end
+
+require 'optparse'
+
+options = {
+  verbose: false,
+  config: nil
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #$0 [-c <config>]"
+
+  opts.separator ""
+  opts.separator "Specific options:"
+
+  opts.on '-v', '--[no-]verbose', 'Enable verbose logging' do |verbose|
+    options[:verbose] = verbose
+  end
+
+  opts.on_tail '-h', '--help', 'Show this message' do
+    puts opts
+    exit
+  end
+end.parse!
+
+options[:config] = ARGV.shift
+@config_path = File.expand_path options[:config]
+
+unless File.readable? @config_path
+  fail "Configuration file `#{options[:config]}' is not readable"
+  exit 1
+end
+
+begin
+  require 'blur'
+rescue LoadError => exception
+  puts 'Ruby was unable to load the blur library!'
+  puts
+  puts "Please ensure that you've installed it using the following command:"
+  puts 'gem install blur'
+  raise exception
+  exit 1
+end
+
+@client = Blur::Client.new config: @config_path
+p @client.config
+@client.connect
+
+# vim: syntax=ruby
