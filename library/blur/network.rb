@@ -30,17 +30,17 @@ module Blur
     # Get the remote hostname.
     #
     # @return [String] the remote hostname.
-    def host; @options[:hostname] end
+    def host; @options['hostname'] end
 
     # Get the remote port.
     # If no port is specified, it returns 6697 if using a secure connection,
     # returns 6667 otherwise.
     #
     # @return [Fixnum] the remote port
-    def port; @options[:port] ||= secure? ? 6697 : 6667 end
+    def port; @options['port'] ||= secure? ? 6697 : 6667 end
     
     # Check to see if it's a secure connection.
-    def secure?; @options[:secure] == true end
+    def secure?; @options['secure'] == true end
 
     # Check to see if FiSH encryption is enabled.
     def fish?; not @options[:fish].nil? end
@@ -74,13 +74,17 @@ module Blur
       @channels = []
       @isupport = ISupport.new self
       
-      unless options[:nickname]
-        raise ArgumentError, "nickname is missing from the networks option block"
+      unless options['nickname']
+        if options['hostname']
+          raise ArgumentError, "Network configuration for `#{options['hostname']}' is missing a nickname"
+        else
+          raise ArgumentError, "Network configuration is missing a nickname"
+        end
       end
       
-      @options[:username] ||= @options[:nickname]
-      @options[:realname] ||= @options[:username]
-      @options[:channels] ||= []
+      @options['username'] ||= @options['nickname']
+      @options['realname'] ||= @options['username']
+      @options['channels'] ||= []
     end
     
     # Send a message to a recipient.
@@ -147,9 +151,9 @@ module Blur
 
     # Called when the connection was successfully established.
     def connected!
-      transmit :PASS, @options[:password] if @options[:password]
-      transmit :NICK, @options[:nickname]
-      transmit :USER, @options[:username], :void, :void, @options[:realname]
+      transmit :PASS, @options['password'] if @options['password']
+      transmit :NICK, @options['nickname']
+      transmit :USER, @options['username'], :void, :void, @options['realname']
     end
 
     # Called when the connection was closed.

@@ -10,28 +10,52 @@ module Blur
   class Client
     include Callbacks
     include Handling, Logging
+
+    # Raise a client error.
+    Error = Class.new StandardError
+
+    # The default client options.
+    DefaultOptions = {
+      environment: (ENV['BLUR_ENV'] || 'development'),
+      config: 'config.yml'
+    }.freeze
     
     # @return [Array] the options that is passed upon initialization.
     attr_accessor :options
-    # @return [Array] a list of scopes that is loaded during runtime.
-    attr_accessor :scopes
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
-    
+    # @return [Hash] client configuration.
+    attr_accessor :config
+
     # Instantiates the client, stores the options, instantiates the networks
     # and then loads available scripts.
     #
     # @param [Hash] options the options for the client.
-    # @option options [Array] networks list of hashes that contain network
-    #   options.
+    # @option options [String] :config path to a configuration file.
+    # @option options [String] :environment the client environment.
     def initialize options
       @scope     = Scope.new self
       @scripts   = []
-      @options   = options
+      @options   = DefaultOptions.merge options
       @networks  = []
+      @config    = {}
+
+      if options[:config]
+        load_config! options[:config]
+      end
+
+      unless @config.key? 'blur'
+        @config['blur'] = {}
+      end
       
-      @networks = @options[:networks].map {|options| Network.new options, self }
-      
+      networks = @config['blur']['networks']
+      if networks and networks.any?
+        networks.each do |network_options|
+          p network_options
+          @networks.<< Network.new network_options, self
+        end
+      end
+
       load_scripts!
       trap 2, &method(:quit)
     end
@@ -108,6 +132,22 @@ module Blur
       end
       
       EventMachine.stop
+    end
+
+    # Load the user-specified configuration file.
+    #
+    # @returns true on success, false otherwise.
+    def load_config! path
+      config = YAML.load_file path
+      environment = @options[:environment]
+
+      if config.key? environment
+        @config = config[environment]
+
+        emit :config_loaded
+      else
+        raise Error, "No configuration found for specified environment `#{environment}'"
+      end
     end
   end
 end

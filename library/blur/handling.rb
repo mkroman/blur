@@ -39,7 +39,7 @@ module Blur
       def got_end_of_motd network, command
         emit :connection_ready, network
         
-        network.options[:channels].each do |channel|
+        network.options['channels'].each do |channel|
           network.transmit :JOIN, channel
         end
       end
