@@ -42,9 +42,6 @@ module Blur
     # Check to see if it's a secure connection.
     def secure?; @options['secure'] == true end
 
-    # Check to see if FiSH encryption is enabled.
-    def fish?; not @options[:fish].nil? end
-
     # Instantiates the network.
     #
     # @param [Hash] options The network options.
@@ -92,10 +89,6 @@ module Blur
     # @param [String, #to_s] recipient the recipient.
     # @param [String] message the message.
     def say recipient, message
-      if recipient.is_a? Channel and recipient.encrypted?
-        message = "+OK #{recipient.encryption.encrypt message}"
-      end
-
       transmit :PRIVMSG, recipient.to_s, message
     end
     
