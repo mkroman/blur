@@ -44,11 +44,7 @@ module Blur
         load_config! options[:config]
       end
 
-      unless @config.key? 'blur'
-        @config['blur'] = {}
-      end
-      
-      networks = @config['blur']['networks']
+      networks = @config.fetch('blur', {})['networks']
       if networks and networks.any?
         networks.each do |network_options|
           p network_options
@@ -93,12 +89,15 @@ module Blur
     # Searches for scripts in working_directory/scripts and then loads them.
     def load_scripts!
       # Load the scripts.
-      script_path = File.dirname $0
-      
-      Dir.glob("#{script_path}/scripts/*.rb").each do |path|
+      scripts_path = @config['blur'].fetch 'scripts_path', 'scripts/'
+      path = File.expand_path scripts_path
+
+      Dir.glob("#{path}/*.rb").each do |path|
         begin
-          @scope.eval_file path
-        rescue => exception
+          @scope.load_scripts_from_file path do |script|
+            @scripts << script
+          end
+        rescue Exception => exception
           puts "Error occured when loading script `#{path}': #{exception}"
           puts exception.backtrace
         end
