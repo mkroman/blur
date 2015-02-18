@@ -90,11 +90,13 @@ module Blur
     def load_scripts!
       # Load the scripts.
       scripts_path = @config['blur'].fetch 'scripts_path', 'scripts/'
+      scripts_config = @config.fetch 'scripts', {}
       path = File.expand_path scripts_path
 
       Dir.glob("#{path}/*.rb").each do |path|
         begin
           @scope.load_scripts_from_file path do |script|
+            script.config = scripts_config.fetch script.script_name.to_s, {}
             @scripts << script
           end
         rescue Exception => exception
@@ -109,8 +111,9 @@ module Blur
     # @see Script#unload!
     def unload_scripts
       @scripts.each do |script|
-        script.unload!
+        script.unload! if script.respond_to? :unload!
       end.clear
+      @scope.scripts.clear
     end
 
     # Called when a network connection is either closed, or terminated.
