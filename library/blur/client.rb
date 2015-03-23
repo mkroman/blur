@@ -33,8 +33,6 @@ module Blur
       
       load_scripts
       trap 2, &method(:quit)
-
-      EventMachine.threadpool_size = 1
     end
     
     # Connect to each network available that is not already connected, then
@@ -43,12 +41,12 @@ module Blur
       networks = @networks.select {|network| not network.connected? }
       
       EventMachine.run do
+        EventMachine.error_handler{|e| p e }
+
         networks.each do |network|
           network.delegate = self
           network.connect
         end
-
-        EventMachine.error_handler{|e| p e }
       end
     end
     
