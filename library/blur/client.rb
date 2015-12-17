@@ -124,11 +124,15 @@ module Blur
     def emit name, *args
       EM.defer do
         @callbacks[name].each do |callback|
-          callback.call *args
+          begin
+            callback.call *args
+          rescue Exception => e
+            log.error "Callback `#{name}' threw an exception - #{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+            puts exception.backtrace.join "\n"
+          end
         end if @callbacks[name]
 
         scripts = @scripts.select{|script| script.__emissions.include? name }
-        
         scripts.each do |script|
           begin
             script.__send__ name, *args

@@ -11,7 +11,9 @@ class Exception
   #
   # @return Fixnum the line of the script the exception was raised on.
   def line
-    backtrace[0].match(Pattern)[1].to_i + 1
+    if result = backtrace[0].match(Pattern)
+      result[1].to_i + 1
+    end
   end
 end
 
