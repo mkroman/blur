@@ -14,8 +14,8 @@ Gem::Specification.new do |spec|
   spec.email    = "mk@uplink.io"
   spec.files    = Dir["library/**/*.rb", "README.md", "LICENSE", ".yardopts"]
 
-  spec.add_dependency "majic", ">= 0.2"
-  spec.add_dependency "eventmachine", "> 0.12"
+  spec.add_dependency "majic", "~> 0.4"
+  spec.add_dependency "eventmachine", "~> 1.0"
 
   spec.require_path = "library"
   spec.required_ruby_version = ">= 1.9.1"
