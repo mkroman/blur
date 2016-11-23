@@ -52,8 +52,7 @@ rescue LoadError => exception
   exit 1
 end
 
-@client = Blur::Client.new config: @config_path
-p @client.config
+@client = Blur::Client.new config_path: @config_path
 @client.connect
 
 # vim: syntax=ruby

@@ -10,6 +10,7 @@ require 'eventmachine'
 require 'blur/logging'
 require 'blur/version'
 require 'blur/callbacks'
+require 'blur/script'
 require 'blur/network'
 require 'blur/client'
 require 'blur/enhancements'
@@ -24,6 +25,24 @@ require 'blur/network/connection'
 # It allows the developer to extend it in multiple ways.
 # It can be by handlers, scripts, communications, and what have you.
 module Blur
+  # Contains all superscript classes for scripts that may be used.
+  @@scripts = {}
+
+  # Creates a new superscript class.
+  def self.Script name, *args, &block
+    klass = Class.new SuperScript
+    klass.name = name
+    klass.events = {}
+    klass.class_exec &block
+
+    @@scripts[name] = klass
+  end
+
+  # Gets all superscript classes.
+  def self.scripts
+    @@scripts
+  end
+
   # Instantiates a client with given options and then makes the client instance
   # evaluate the given block to form a DSL.
   #

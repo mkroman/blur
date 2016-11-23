@@ -14,9 +14,13 @@ module Blur
     # Raise a client error.
     Error = Class.new StandardError
 
+    CONFIG_PATH = 'config.yml'
+    SCRIPTS_DIR = File.join Dir.pwd, 'scripts'
+
     # The default client options.
     DEFAULT_OPTIONS = {
-      config: 'config.yml',
+      config_path: CONFIG_PATH,
+      scripts_dir: SCRIPTS_DIR,
       environment: (ENV['BLUR_ENV'] || 'development'),
     }.freeze
     
@@ -26,6 +30,8 @@ module Blur
     attr_accessor :networks
     # @return [Hash] client configuration.
     attr_accessor :config
+    # @return [Hash] initialized scripts.
+    attr_accessor :scripts
 
     # Instantiates the client, stores the options, instantiates the networks
     # and then loads available scripts.
@@ -35,17 +41,15 @@ module Blur
     # @option options [String] :environment the client environment.
     def initialize options
       @networks = []
+      @scripts  = []
       @config   = {}
       @options  = DEFAULT_OPTIONS.merge options
 
-      if options[:config]
-        load_config! options[:config]
-      end
+      load_config! if options[:config_path]
 
       networks = @config.fetch('blur', {})['networks']
       if networks and networks.any?
         networks.each do |network_options|
-          p network_options
           @networks.<< Network.new network_options, self
         end
       end
@@ -59,6 +63,7 @@ module Blur
       networks = @networks.select {|network| not network.connected? }
       
       EventMachine.run do
+        load_scripts!
         networks.each &:connect
 
         EventMachine.error_handler do |exception|
@@ -77,7 +82,7 @@ module Blur
     def got_command network, command
       log "#{'←' ^ :green} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
       name = :"got_#{command.name.downcase}"
-      
+
       if respond_to? name
         __send__ name, network, command
       end
@@ -101,11 +106,38 @@ module Blur
       EventMachine.stop
     end
 
+    def load_scripts!
+      Dir.glob File.join(options[:scripts_dir], '*.rb') do |file|
+        load file
+      end
+
+      scripts_config = @config.fetch 'scripts', {}
+
+      Blur.scripts.each do |name, superscript|
+        script = superscript.allocate
+        script.config = scripts_config.fetch name, {}
+        script._client_ref = self
+        script.send :initialize
+
+        @scripts << script
+      end
+    end
+
+    # Unloads initialized scripts and superscripts.
+    def unload_scripts!
+      @scripts.each do |script|
+        script.__send__ :unloaded if script.respond_to? :unloaded
+      end
+
+      @scripts.clear
+      Blur.scripts.clear
+    end
+
     # Load the user-specified configuration file.
     #
     # @returns true on success, false otherwise.
-    def load_config! path
-      config = YAML.load_file path
+    def load_config!
+      config = YAML.load_file options[:config_path]
       environment = @options[:environment]
 
       if config.key? environment
