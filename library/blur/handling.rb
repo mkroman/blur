@@ -117,18 +117,14 @@ module Blur
         name, message = command.params
 
         if channel = network.channels[name]
-          if user = network.users[command.sender.nickname]
-            user.name = command.sender.username
-            user.host = command.sender.hostname
-
-            emit :message, user, channel, message
-          else
+          unless user = network.users[command.sender.nickname]
             user = User.new command.sender.nickname, network
-            user.name = command.sender.username
-            user.host = command.sender.hostname
-
-            emit :message, user, channel, message
           end
+
+          user.name = command.sender.username
+          user.host = command.sender.hostname
+
+          emit :message, user, channel, message
         else # This is a private message
           unless user = network.users[command.sender.nickname]
             user = User.new command.sender.nickname, network
@@ -150,7 +146,6 @@ module Blur
         user = find_or_create_user command.sender.nickname, network
         user.name = command.sender.username
         user.host = command.sender.hostname
-        p user
         
         if channel = find_or_create_channel(channel_name, network)
           _user_join_channel user, channel
@@ -265,7 +260,7 @@ module Blur
 
         # Forget the user if we no longer share any channels.
         if user.channels.empty?
-          network.users.delete user.nick
+          user.network.users.delete user.nick
         end
       end
 
