@@ -106,9 +106,17 @@ module Blur
       EventMachine.stop
     end
 
+    # Loads all scripts in the script directory.
     def load_scripts!
       Dir.glob File.join(options[:scripts_dir], '*.rb') do |file|
-        load file
+        begin
+          load file
+        rescue Exception => e
+          STDERR.puts "The script `#{file}' failed to load"
+          STDERR.puts "#{e.class}: #{e.message}"
+          STDERR.puts
+          STDERR.puts 'Backtrace:', '---', e.backtrace
+        end
       end
 
       scripts_config = @config.fetch 'scripts', {}
