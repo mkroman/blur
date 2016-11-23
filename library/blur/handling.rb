@@ -40,28 +40,27 @@ module Blur
         emit :connection_ready, network
         
         network.options['channels'].each do |channel|
-          network.transmit :JOIN, channel
+          network.join channel
         end
       end
       
       # Called when the namelist of a channel was received.
       def got_name_reply network, command
-        name  = command[2]
-        users = command[3].split.map do |nick|
+        name  = command[2] # Channel name.
+        nicks = command[3].split.map do |nick|
           # Slice the nick if the first character is a user mode prefix.
           if network.user_prefixes.include? nick.chr
             nick.slice! 0
           end
 
-          Network::User.new nick
+          nick
         end
         
         if channel = find_or_create_channel(name, network)
+          users = nicks.map{|nick| find_or_create_user nick, network }
           users.each do |user|
-            user.channel = channel
-            user.network = network
-
-            channel.users << user
+            user.channels << channel
+            channel.users << user unless channel.users.include? user
           end
 
           emit :channel_who_reply, channel
@@ -73,9 +72,9 @@ module Blur
       # == Callbacks:
       # Emits :topic_change with the parameters +channel+ and +topic+.
       def got_channel_topic network, command
-        me, name, topic = command.params
+        _, channel_name, topic = command.params
         
-        if channel = find_or_create_channel(name, network)
+        if channel = find_or_create_channel(channel_name, network)
           emit :channel_topic, channel, topic
 
           channel.topic = topic
@@ -92,17 +91,15 @@ module Blur
       # Called when a user changed nickname.
       #
       # == Callbacks:
-      # Emits :user_rename with the parameters +channel+, +user+, +old_nick and +new_nick+ 
+      # Emits :user_rename with the parameters +channel+, +user+ and +new_nick+
       def got_nick network, command
-        nick = command.sender.nickname
+        old_nick = command.sender.nickname
         
-        if channels = network.channels_with_user(nick)
-          channels.each do |channel|
-            if user = channel.user_by_nick(nick)
-              user.nick = command[0]
-              emit :user_rename, channel, user, command[0]
-            end
-          end
+        if user = network.users.delete(old_nick)
+          new_nick = command[0]
+          emit :user_rename, channel, user, new_nick
+          user.nick = new_nick
+          network.users[new_nick] = user
         end
       end
       
@@ -118,21 +115,22 @@ module Blur
       def got_privmsg network, command
         return if command.sender.is_a? String # Ignore all server privmsgs
         name, message = command.params
-        
-        if channel = network.channel_by_name(name)
-          if user = channel.user_by_nick(command.sender.nickname)
-            user.name = command.sender.username
-            user.host = command.sender.hostname
 
-            emit :message, user, channel, message
-          else
-            # Odd… this shouldn't happen
+        if channel = network.channels[name]
+          unless user = network.users[command.sender.nickname]
+            user = User.new command.sender.nickname, network
           end
-        else # This is a private message
-          user = Network::User.new command.sender.nickname
+
           user.name = command.sender.username
           user.host = command.sender.hostname
-          user.network = network
+
+          emit :message, user, channel, message
+        else # This is a private message
+          unless user = network.users[command.sender.nickname]
+            user = User.new command.sender.nickname, network
+            user.name = command.sender.username
+            user.host = command.sender.hostname
+          end
 
           emit :private_message, user, message
         end
@@ -143,17 +141,15 @@ module Blur
       # == Callbacks:
       # Emits +:user_entered+ with the parameters +channel+ and +user+.
       def got_join network, command
-        name = command[0]
-        user = Network::User.new command.sender.nickname
+        channel_name = command[0]
+
+        user = find_or_create_user command.sender.nickname, network
+        user.name = command.sender.username
+        user.host = command.sender.hostname
         
-        if channel = network.channel_by_name(name)
-          user.name = command.sender.username
-          user.host = command.sender.hostname
-          user.channel = channel
-          user.network = network
-          
-          channel.users << user
-          
+        if channel = find_or_create_channel(channel_name, network)
+          _user_join_channel user, channel
+
           emit :user_entered, channel, user
         end
       end
@@ -163,11 +159,11 @@ module Blur
       # == Callbacks:
       # Emits +:user_left+ with the parameters +channel+ and +user+.
       def got_part network, command
-        name = command[0]
+        channel_name = command[0]
         
-        if channel = network.channel_by_name(name)
-          if user = channel.user_by_nick(command.sender.nickname)
-            channel.users.delete user
+        if channel = network.channels[channel_name]
+          if user = network.users[command.sender.nickname]
+            _user_part_channel user, channel
             
             emit :user_left, channel, user
           end
@@ -180,15 +176,15 @@ module Blur
       # Emits +:user_quit+ with the parameters +channel+ and +user+.
       def got_quit network, command
         nick = command.sender.nickname
+        reason = command[2]
         
-        if channels = network.channels_with_user(nick)
-          channels.each do |channel|
-            if user = channel.user_by_nick(nick)
-              channel.users.delete user 
-            
-              emit :user_quit, channel, user
-            end
+        if user = network.users[nick]
+          user.channels.each do |channel|
+            channel.users.delete user
           end
+
+          emit :user_quit, user, reason
+          network.users.delete nick
         end
       end
       
@@ -202,10 +198,10 @@ module Blur
       def got_kick network, command
         name, target, reason = command.params
         
-        if channel = network.channel_by_name(name)
-          if kicker = channel.user_by_nick(command.sender.nickname)
-            if kickee = channel.user_by_nick(target)
-              channel.users.delete kickee
+        if channel = network.channels[name]
+          if kicker = network.users[command.sender.nickname]
+            if kickee = network.users[target]
+              _user_part_channel kickee, channel
               
               emit :user_kicked, kicker, channel, kickee, reason
             end
@@ -218,10 +214,10 @@ module Blur
       # == Callbacks:
       # Emits :topic with the parameters +user+, +channel+ and +topic+.
       def got_topic network, command
-        name, topic = command.params
+        channel_name, topic = command.params
         
-        if channel = network.channel_by_name(name)          
-          if user = channel.user_by_nick(command.sender.nickname)
+        if channel = network.channels[channel_name]
+          if user = network.users[command.sender.nickname]
             emit :topic, user, channel, topic
           end
           
@@ -239,20 +235,8 @@ module Blur
       def got_mode network, command
         name, modes, limit, nick, mask = command.params
 
-        if channel = network.channel_by_name(name)
-          if limit
-            unless limit.numeric?
-              nick = limit
-            end
-
-            if user = channel.user_by_nick(nick)
-              user.merge_modes modes
-              emit :user_mode, user, modes
-            end
-          else
-            channel.merge_modes modes
-            emit :channel_mode, channel, modes
-          end
+        if channel = network.channels[name]
+          # FIXME
         end
       end
 
@@ -270,18 +254,41 @@ module Blur
 
     private
 
-      def find_or_create_channel name, network, users = []
-        channel = network.channel_by_name name
+      def _user_part_channel user, channel
+        user.channels.delete channel
+        channel.users.delete user
 
-        if channel.nil?
-          channel = Network::Channel.new name, network, users
-          network.channels << channel
+        # Forget the user if we no longer share any channels.
+        if user.channels.empty?
+          user.network.users.delete user.nick
+        end
+      end
 
+      def _user_join_channel user, channel
+        channel.users << user
+        user.channels << channel
+      end
+
+      def find_or_create_user nick, network
+        unless user = network.users[nick]
+          user = User.new nick, network
+          network.users[nick] = user
+          emit :user_created, user
+        end
+
+        user
+      end
+
+      def find_or_create_channel name, network
+        unless channel = network.channels[name]
+          channel = Channel.new name, network
+          network.channels[name] = channel
           emit :channel_created, channel
         end
 
         channel
       end
     end
+
   end
 end

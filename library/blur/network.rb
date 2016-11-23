@@ -13,10 +13,11 @@ module Blur
 
     # @return [Hash] the network options.
     attr_accessor :options
-    # @return [Array] the list of channels the client is in.
+
+    # @return [Hash] the map of users that is known.
+    attr_accessor :users
+    # @return [Hash] the map of channels the client is in.
     attr_accessor :channels
-    # @return [Array] the list of private messages the client remembers.
-    attr_accessor :dialogues
     # @return [Client] the client reference.
     attr_accessor :client
     # @return [Network::Connection] the connection instance.
@@ -66,9 +67,10 @@ module Blur
     # @option options [optional, Boolean] :ssl_no_verify Disable verification
     #   alltogether.
     def initialize options, client = nil
-      @client   = client
-      @options  = options
-      @channels = []
+      @client = client
+      @options = options
+      @users = {}
+      @channels = {}
       @isupport = ISupport.new self
       
       unless options['nickname']
@@ -95,6 +97,11 @@ module Blur
     # Called when the network connection has enough data to form a command.
     def got_command command
       @client.got_command self, command
+    rescue => e
+      puts "#{e.class}: #{e.message}"
+      puts
+      puts "---"
+      puts e.backtrace
     end
     
     # Find a channel by its name.
@@ -171,6 +178,16 @@ module Blur
       log "#{'→' ^ :red} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
       
       @connection.send_data "#{command}\r\n"
+    end
+
+    # Send a private message.
+    def send_privmsg recipient, message
+      transmit :PRIVMSG, recipient, message
+    end
+
+    # Join a channel.
+    def join channel
+      transmit :JOIN, channel
     end
 
     # Convert it to a debug-friendly format.
