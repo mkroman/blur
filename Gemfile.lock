@@ -63,7 +63,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  deep_merge
+  deep_merge (~> 1.1)
   eventmachine (~> 1.0.0)
   guard-rspec
   pry

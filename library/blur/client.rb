@@ -49,6 +49,7 @@ module Blur
       load_config!
 
       networks = @config['blur']['networks']
+
       if networks and networks.any?
         networks.each do |network_options|
           @networks.<< Network.new network_options, self

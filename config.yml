@@ -61,5 +61,6 @@ development:
       nickname: blur-dev
       channels: 
       - "#blur"
+      - "#blur2"
       secure: true
       port: 6667
