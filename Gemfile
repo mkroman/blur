@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 # Project dependencies.
 gem 'eventmachine', '~> 1.0.0'
+gem 'deep_merge', '~> 1.1'
 
 # Testing dependencies.
 group :test do

@@ -4,6 +4,7 @@ require 'yaml'
 require 'socket'
 require 'ostruct'
 require 'openssl'
+require 'deep_merge'
 require 'eventmachine'
 
 # Require all library files.

@@ -1,24 +1,18 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-$:.unshift File.dirname(__FILE__) + '/../library'
-
-if ARGV.count < 1
-  puts "Usage: #$0 <config>"
-  puts
-  puts "For more options, please run #$0 --help"
-  exit 1
-end
+$:.unshift File.join __dir__, '../library'
 
 require 'optparse'
 
 options = {
   verbose: false,
-  config: nil
+  environment: 'development',
+  config_path: 'config.yml'
 }
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: #$0 [-c <config>]"
+  opts.banner = "Usage: #$0 [-c <config>] [-e <env>]"
 
   opts.separator ""
   opts.separator "Specific options:"
@@ -27,19 +21,19 @@ OptionParser.new do |opts|
     options[:verbose] = verbose
   end
 
+  opts.on '-c', '--config=PATH', 'Set the configuration file' do |config_path|
+    options[:config_path] = config_path
+  end
+
+  opts.on '-eENV', '--environment=ENV', 'Environment to run in' do |environment|
+    options[:environment] = environment
+  end
+
   opts.on_tail '-h', '--help', 'Show this message' do
     puts opts
     exit
   end
 end.parse!
-
-options[:config] = ARGV.shift
-@config_path = File.expand_path options[:config]
-
-unless File.readable? @config_path
-  fail "Configuration file `#{options[:config]}' is not readable"
-  exit 1
-end
 
 begin
   require 'blur'
@@ -52,7 +46,13 @@ rescue LoadError => exception
   exit 1
 end
 
-@client = Blur::Client.new config_path: @config_path
+config_path = File.expand_path options[:config_path]
+unless File.readable? config_path
+  fail "Configuration file `#{config_path}' is not readable"
+  exit 1
+end
+
+@client = Blur::Client.new options
 @client.connect
 
 # vim: syntax=ruby

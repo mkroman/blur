@@ -4,9 +4,9 @@ production: &base
   ## Blur client settings
   blur:
     # Save cached script variables in this directory
-    cache_path: cache/
+    cache_dir: cache/
     # Where to look for scripts to be loaded
-    scripts_path: scripts/
+    scripts_dir: scripts/
 
     # Default settings inherited by networks (with '<<: *defaults')
     defaults: &defaults
@@ -36,14 +36,14 @@ production: &base
   ## Script settings
   scripts:
     ## Admin authentication script settings
-    auth:
+    :auth:
       # Set default admins (this will be cached once the script has loaded at
       # least once, after that it's no longer used as long as the cache exists.)
       #
       # The format is a hostmask, i.e. `<nick>!<ident>@<host>`
-      admins:
-      # - mk!mk@uplink.io
-      # - mk!mk@maero.dk
+      :admins:
+        - mk!mk@uplink.io
+        - mk!mk@maero.dk
 
     ## Wolfram|Alpha script settings
     wolfram_alpha:

@@ -11,21 +11,22 @@ module Blur
     include Callbacks
     include Handling, Logging
 
-    # Raise a client error.
+    # Client error.
     Error = Class.new StandardError
 
-    CONFIG_PATH = 'config.yml'
-    SCRIPTS_DIR = File.join Dir.pwd, 'scripts'
+    # The default environment.
+    ENVIRONMENT = ENV['BLUR_ENV'] || 'development'
 
-    # The default client options.
-    DEFAULT_OPTIONS = {
-      config_path: CONFIG_PATH,
-      scripts_dir: SCRIPTS_DIR,
-      environment: (ENV['BLUR_ENV'] || 'development'),
+    # The default configuration.
+    DEFAULT_CONFIG = {
+      'blur' => {
+        'cache_dir' => 'cache/',
+        'scripts_dir' => 'scripts/',
+        'networks' => {}
+      },
+      'scripts' => {},
     }.freeze
     
-    # @return [Array] the options that is passed upon initialization.
-    attr_accessor :options
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
     # @return [Hash] client configuration.
@@ -37,17 +38,17 @@ module Blur
     # and then loads available scripts.
     #
     # @param [Hash] options the options for the client.
-    # @option options [String] :config path to a configuration file.
+    # @option options [String] :config_path path to a configuration file.
     # @option options [String] :environment the client environment.
-    def initialize options
+    def initialize options = {}
+      @scripts = []
       @networks = []
-      @scripts  = []
-      @config   = {}
-      @options  = DEFAULT_OPTIONS.merge options
+      @config_path = options[:config_path]
+      @environment = options[:environment]
 
-      load_config! if options[:config_path]
+      load_config!
 
-      networks = @config.fetch('blur', {})['networks']
+      networks = @config['blur']['networks']
       if networks and networks.any?
         networks.each do |network_options|
           @networks.<< Network.new network_options, self
@@ -60,7 +61,7 @@ module Blur
     # Connect to each network available that is not already connected, then
     # proceed to start the run-loop.
     def connect
-      networks = @networks.select {|network| not network.connected? }
+      networks = @networks.reject &:connected?
       
       EventMachine.run do
         load_scripts!
@@ -106,9 +107,18 @@ module Blur
       EventMachine.stop
     end
 
+    # Reloads configuration file and scripts.
+    def reload!
+      unload_scripts!
+      load_config!
+      load_scripts!
+    end
+
     # Loads all scripts in the script directory.
     def load_scripts!
-      Dir.glob File.join(options[:scripts_dir], '*.rb') do |file|
+      scripts_dir = File.expand_path @config['blur']['scripts_dir']
+
+      Dir.glob File.join(scripts_dir, '*.rb') do |file|
         begin
           load file
         rescue Exception => e
@@ -119,7 +129,7 @@ module Blur
         end
       end
 
-      scripts_config = @config.fetch 'scripts', {}
+      scripts_config = @config['scripts']
 
       Blur.scripts.each do |name, superscript|
         script = superscript.allocate
@@ -141,19 +151,21 @@ module Blur
       Blur.scripts.clear
     end
 
+  private
+
     # Load the user-specified configuration file.
     #
     # @returns true on success, false otherwise.
     def load_config!
-      config = YAML.load_file options[:config_path]
-      environment = @options[:environment]
+      config = YAML.load_file @config_path
 
-      if config.key? environment
-        @config = config[environment]
+      if config.key? @environment
+        @config = config[@environment]
+        @config.deep_merge DEFAULT_CONFIG
 
         emit :config_load
       else
-        raise Error, "No configuration found for specified environment `#{environment}'"
+        raise Error, "No configuration found for specified environment `#{@environment}'"
       end
     end
   end
