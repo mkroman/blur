@@ -15,9 +15,9 @@ module Blur
     Error = Class.new StandardError
 
     # The default client options.
-    DefaultOptions = {
+    DEFAULT_OPTIONS = {
+      config: 'config.yml',
       environment: (ENV['BLUR_ENV'] || 'development'),
-      config: 'config.yml'
     }.freeze
     
     # @return [Array] the options that is passed upon initialization.
@@ -34,11 +34,9 @@ module Blur
     # @option options [String] :config path to a configuration file.
     # @option options [String] :environment the client environment.
     def initialize options
-      @scope     = Scope.new self
-      @scripts   = []
-      @options   = DefaultOptions.merge options
-      @networks  = []
-      @config    = {}
+      @networks = []
+      @config   = {}
+      @options  = DEFAULT_OPTIONS.merge options
 
       if options[:config]
         load_config! options[:config]
@@ -52,7 +50,6 @@ module Blur
         end
       end
 
-      load_scripts!
       trap 2, &method(:quit)
     end
     
@@ -86,36 +83,6 @@ module Blur
       end
     end
     
-    # Searches for scripts in working_directory/scripts and then loads them.
-    def load_scripts!
-      # Load the scripts.
-      scripts_path = @config['blur'].fetch 'scripts_path', 'scripts/'
-      scripts_config = @config.fetch 'scripts', {}
-      path = File.expand_path scripts_path
-
-      Dir.glob("#{path}/*.rb").each do |path|
-        begin
-          @scope.load_scripts_from_file path do |script|
-            script.config = scripts_config.fetch script.script_name.to_s, {}
-            @scripts << script
-          end
-        rescue Exception => exception
-          puts "Error occured when loading script `#{path}': #{exception}"
-          puts exception.backtrace
-        end
-      end
-    end
-    
-    # Unload all scripts gracefully that have been loaded into the client.
-    #
-    # @see Script#unload!
-    def unload_scripts
-      @scripts.each do |script|
-        script.unload! if script.respond_to? :unload!
-      end.clear
-      @scope.scripts.clear
-    end
-
     # Called when a network connection is either closed, or terminated.
     def network_connection_closed network
       emit :connection_close, network
@@ -126,8 +93,6 @@ module Blur
     #
     # @param [optional, Symbol] signal The signal received by the system, if any.
     def quit signal = :SIGINT
-      unload_scripts
-      
       @networks.each do |network|
         network.transmit :QUIT, "Got SIGINT?"
         network.disconnect
@@ -146,7 +111,7 @@ module Blur
       if config.key? environment
         @config = config[environment]
 
-        emit :config_loaded
+        emit :config_load
       else
         raise Error, "No configuration found for specified environment `#{environment}'"
       end
