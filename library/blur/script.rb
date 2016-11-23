@@ -1,6 +1,56 @@
 # encoding: utf-8
 
 module Blur
+  module Commands
+    # This is a command look-up-table with an autoincrementing index.
+    class CommandLUT
+      attr_accessor :commands
+
+      def initialize
+        @index = -1
+        @commands = {}
+      end
+
+      # Inserts the command to the LUT.
+      #
+      # @returns the index.
+      def << command
+        @commands[command] = @index += 1
+        @index
+      end
+    end
+
+    module ClassMethods
+      # Creates a new command.
+      #
+      # @example
+      #   command! '!ping' do |user, channel, args|
+      #     channel.say "#{user}: pong"
+      #   end
+      def command! command, *args, &block
+        id = (command_lut << command)
+        define_method :"_command_#{id}", &block
+      end
+    end
+
+    def self.included klass
+      class << klass
+        attr_accessor :command_lut
+      end
+
+      klass.extend ClassMethods
+      klass.command_lut = CommandLUT.new
+      klass.register! message: -> (script, user, channel, line) {
+        command, args = line.split ' ', 2
+        return unless command
+
+        if id = klass.command_lut.commands[command.downcase]
+          script.__send__ :"_command_#{id}", user, channel, args
+        end
+      }
+    end
+  end
+
   class SuperScript
     class << self
       attr_accessor :name, :authors, :version, :description, :events
