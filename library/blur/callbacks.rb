@@ -19,6 +19,21 @@ module Blur
     def emit name, *args
       callbacks = @@callbacks[name]
 
+      begin
+        @scripts.select{|script| script.class.events.key? name }.each do |script|
+          script.class.events[name].each do |method|
+            if method.is_a? Proc
+              method.call script, *args
+            else
+              script.__send__ method, *args
+            end
+          end
+        end
+      rescue => e
+        puts "#{e.class}: #{e.message}"
+        puts e.backtrace
+      end
+
       return if callbacks.nil? or callbacks.empty?
 
       EM.defer do

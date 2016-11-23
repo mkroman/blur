@@ -1,78 +1,116 @@
 # encoding: utf-8
 
 module Blur
-  # The +Script+ class is used for encapsulating dynamically loaded ruby scripts.
-  class Script
-    include DSL
-    include Callbacks
+  module Commands
+    # This is a command look-up-table with an autoincrementing index.
+    class CommandLUT
+      attr_accessor :commands
 
-    # Script-specific configuration variables.
-    #
-    # Can be defined in the `scripts` key in the client configuration.
-    attr_accessor :config
+      def initialize
+        @index = -1
+        @commands = {}
+      end
 
-    # Get the script name.
-    #
-    # @return [Symbol] the script name.
-    def self.name
-      class_variable_get :@@name
-    end
-
-    # Get a reference to the running Blur::Client instance.
-    #
-    # @return [Client] the running client instance.
-    def self.client; class_variable_get :@@client end
-
-    # Called when a new script block is called.
-    #
-    # @param args the extra arguments to the Script block.
-    def self.script_init *args; end
-
-    # Get a printable description of the script class.
-    #
-    # @return [String] the printable description.
-    def self.inspect
-      %%#<Blur::Script @@name=#{name.inspect}>%
-    end
-
-    # Alias for `inspect`.
-    def self.to_s
-      inspect
-    end
-
-    # Get a reference to the running Blur::Client instance.
-    #
-    # @return [Client] the running client instance.
-    def client; self.class.client end
-
-    # Get a printable description of the script instance.
-    #
-    # @return [String] the printable description.
-    def inspect
-      %%#<Blur::Script::0x#{object_id.to_s 16}(#{self.class.name.inspect})>%
-    end
-
-    # Include a module inside the script.
-    #
-    # @param [Array] args list of modules to include.
-    def include *args
-      args.select{|arg| arg.is_a? Module }.each do |modul|
-        modul.module_init self if modul.respond_to? :module_init
-
-        self.class.__send__ :include, modul
+      # Inserts the command to the LUT.
+      #
+      # @returns the index.
+      def << command
+        @commands[command] = @index += 1
+        @index
       end
     end
 
-    # Get the script name.
-    #
-    # @return [String] the script name.
-    def script_name
-      self.class.name
+    module ClassMethods
+      # Creates a new command.
+      #
+      # @example
+      #   command! '!ping' do |user, channel, args|
+      #     channel.say "#{user}: pong"
+      #   end
+      def command! command, *args, &block
+        id = (command_lut << command)
+        define_method :"_command_#{id}", &block
+      end
     end
 
-    # Alias for `inspect`.
-    def to_s
-      inspect
+    def self.included klass
+      class << klass
+        attr_accessor :command_lut
+      end
+
+      klass.extend ClassMethods
+      klass.command_lut = CommandLUT.new
+      klass.register! message: -> (script, user, channel, line) {
+        command, args = line.split ' ', 2
+        return unless command
+
+        if id = klass.command_lut.commands[command.downcase]
+          script.__send__ :"_command_#{id}", user, channel, args
+        end
+      }
     end
+  end
+
+  class SuperScript
+    class << self
+      attr_accessor :name, :authors, :version, :description, :events
+
+      # Sets the author.
+      # 
+      # @example
+      #   Author 'John Doe <john.doe@example.com>'
+      def Author *authors
+        @authors = authors
+      end
+
+      # Sets the description.
+      #
+      # @example
+      #   Description 'This is an example script.'
+      def Description description
+        @description = description
+      end
+
+      # Sets the version.
+      #
+      # @example
+      #   Version '1.0.0'
+      def Version version
+        @version = version
+      end
+
+      # Registers events to certain functions.
+      #
+      # @example
+      #   register! message: :on_message, connection_ready: :connected
+      def register! *args
+        args.each do |events|
+          if events.is_a? Array
+            (@events[event] ||= []).concat events
+          else
+            events.each{|event, method| (@events[event] ||= []) << method }
+          end
+        end
+      end
+
+      def to_s; inspect end
+      def inspect; %%#<SuperScript:0x#{self.object_id.to_s 16}>% end
+
+      alias :author :authors
+    end
+
+    attr_accessor :_client_ref, :config
+
+    def unloaded
+    end
+
+    def inspect
+      "#<Script(#{self.class.name.inspect}) " \
+        "@author=#{self.class.author.inspect} " \
+        "@version=#{self.class.version.inspect} " \
+        "@description=#{self.class.description.inspect}>"
+    end
+
+    def to_s; inspect end
   end
 end

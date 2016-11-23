@@ -1,5 +1,9 @@
 # encoding: utf-8
 
-Script :some_script do
-  puts "Hello world! I am #{self.inspect}!"
+Blur::Script :test do
+  Author 'Mikkel Kroman <mk@maero.dk>'
+
+  def test_method
+    2000
+  end
 end

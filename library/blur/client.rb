@@ -11,57 +11,60 @@ module Blur
     include Callbacks
     include Handling, Logging
 
-    # Raise a client error.
+    # Client error.
     Error = Class.new StandardError
 
-    # The default client options.
-    DefaultOptions = {
-      environment: (ENV['BLUR_ENV'] || 'development'),
-      config: 'config.yml'
+    # The default environment.
+    ENVIRONMENT = ENV['BLUR_ENV'] || 'development'
+
+    # The default configuration.
+    DEFAULT_CONFIG = {
+      'blur' => {
+        'cache_dir' => 'cache/',
+        'scripts_dir' => 'scripts/',
+        'networks' => {}
+      },
+      'scripts' => {},
     }.freeze
     
-    # @return [Array] the options that is passed upon initialization.
-    attr_accessor :options
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
     # @return [Hash] client configuration.
     attr_accessor :config
+    # @return [Hash] initialized scripts.
+    attr_accessor :scripts
 
     # Instantiates the client, stores the options, instantiates the networks
     # and then loads available scripts.
     #
     # @param [Hash] options the options for the client.
-    # @option options [String] :config path to a configuration file.
+    # @option options [String] :config_path path to a configuration file.
     # @option options [String] :environment the client environment.
-    def initialize options
-      @scope     = Scope.new self
-      @scripts   = []
-      @options   = DefaultOptions.merge options
-      @networks  = []
-      @config    = {}
+    def initialize options = {}
+      @scripts = []
+      @networks = []
+      @config_path = options[:config_path]
+      @environment = options[:environment]
 
-      if options[:config]
-        load_config! options[:config]
-      end
+      load_config!
 
-      networks = @config.fetch('blur', {})['networks']
+      networks = @config['blur']['networks']
       if networks and networks.any?
         networks.each do |network_options|
-          p network_options
           @networks.<< Network.new network_options, self
         end
       end
 
-      load_scripts!
       trap 2, &method(:quit)
     end
     
     # Connect to each network available that is not already connected, then
     # proceed to start the run-loop.
     def connect
-      networks = @networks.select {|network| not network.connected? }
+      networks = @networks.reject &:connected?
       
       EventMachine.run do
+        load_scripts!
         networks.each &:connect
 
         EventMachine.error_handler do |exception|
@@ -80,42 +83,12 @@ module Blur
     def got_command network, command
       log "#{'←' ^ :green} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
       name = :"got_#{command.name.downcase}"
-      
+
       if respond_to? name
         __send__ name, network, command
       end
     end
     
-    # Searches for scripts in working_directory/scripts and then loads them.
-    def load_scripts!
-      # Load the scripts.
-      scripts_path = @config['blur'].fetch 'scripts_path', 'scripts/'
-      scripts_config = @config.fetch 'scripts', {}
-      path = File.expand_path scripts_path
-
-      Dir.glob("#{path}/*.rb").each do |path|
-        begin
-          @scope.load_scripts_from_file path do |script|
-            script.config = scripts_config.fetch script.script_name.to_s, {}
-            @scripts << script
-          end
-        rescue Exception => exception
-          puts "Error occured when loading script `#{path}': #{exception}"
-          puts exception.backtrace
-        end
-      end
-    end
-    
-    # Unload all scripts gracefully that have been loaded into the client.
-    #
-    # @see Script#unload!
-    def unload_scripts
-      @scripts.each do |script|
-        script.unload! if script.respond_to? :unload!
-      end.clear
-      @scope.scripts.clear
-    end
-
     # Called when a network connection is either closed, or terminated.
     def network_connection_closed network
       emit :connection_close, network
@@ -126,8 +99,6 @@ module Blur
     #
     # @param [optional, Symbol] signal The signal received by the system, if any.
     def quit signal = :SIGINT
-      unload_scripts
-      
       @networks.each do |network|
         network.transmit :QUIT, "Got SIGINT?"
         network.disconnect
@@ -136,19 +107,65 @@ module Blur
       EventMachine.stop
     end
 
+    # Reloads configuration file and scripts.
+    def reload!
+      unload_scripts!
+      load_config!
+      load_scripts!
+    end
+
+    # Loads all scripts in the script directory.
+    def load_scripts!
+      scripts_dir = File.expand_path @config['blur']['scripts_dir']
+
+      Dir.glob File.join(scripts_dir, '*.rb') do |file|
+        begin
+          load file
+        rescue Exception => e
+          STDERR.puts "The script `#{file}' failed to load"
+          STDERR.puts "#{e.class}: #{e.message}"
+          STDERR.puts
+          STDERR.puts 'Backtrace:', '---', e.backtrace
+        end
+      end
+
+      scripts_config = @config['scripts']
+
+      Blur.scripts.each do |name, superscript|
+        script = superscript.allocate
+        script.config = scripts_config.fetch name, {}
+        script._client_ref = self
+        script.send :initialize
+
+        @scripts << script
+      end
+    end
+
+    # Unloads initialized scripts and superscripts.
+    def unload_scripts!
+      @scripts.each do |script|
+        script.__send__ :unloaded if script.respond_to? :unloaded
+      end
+
+      @scripts.clear
+      Blur.scripts.clear
+    end
+
+  private
+
     # Load the user-specified configuration file.
     #
     # @returns true on success, false otherwise.
-    def load_config! path
-      config = YAML.load_file path
-      environment = @options[:environment]
+    def load_config!
+      config = YAML.load_file @config_path
 
-      if config.key? environment
-        @config = config[environment]
+      if config.key? @environment
+        @config = config[@environment]
+        @config.deep_merge DEFAULT_CONFIG
 
-        emit :config_loaded
+        emit :config_load
       else
-        raise Error, "No configuration found for specified environment `#{environment}'"
+        raise Error, "No configuration found for specified environment `#{@environment}'"
       end
     end
   end
