@@ -41,7 +41,7 @@ module Blur
     # @option options [String] :config_path path to a configuration file.
     # @option options [String] :environment the client environment.
     def initialize options = {}
-      @scripts = []
+      @scripts = {}
       @networks = []
       @config_path = options[:config_path]
       @environment = options[:environment]
@@ -138,8 +138,10 @@ module Blur
         script._client_ref = self
         script.send :initialize
 
-        @scripts << script
+        @scripts[name] = script
       end
+
+      emit :scripts_loaded
     end
 
     # Unloads initialized scripts and superscripts.
@@ -147,7 +149,7 @@ module Blur
     # This method will call #unloaded on the instance of each loaded script to
     # give it a chance to clean up any resources.
     def unload_scripts!
-      @scripts.each do |script|
+      @scripts.each do |name, script|
         script.__send__ :unloaded if script.respond_to? :unloaded
       end.clear
 

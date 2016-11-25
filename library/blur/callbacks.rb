@@ -17,10 +17,8 @@ module Blur
     # @param name [Symbol] The event name.
     # @param args [optional, Array] The list of arguments to pass.
     def emit name, *args
-      callbacks = @@callbacks[name]
-
       begin
-        @scripts.select{|script| script.class.events.key? name }.each do |script|
+        @scripts.select{|_, script| script.class.events.key? name }.each do |_, script|
           script.class.events[name].each do |method|
             if method.is_a? Proc
               method.call script, *args
@@ -34,6 +32,7 @@ module Blur
         puts e.backtrace
       end
 
+      callbacks = @@callbacks[name]
       return if callbacks.nil? or callbacks.empty?
 
       EM.defer do

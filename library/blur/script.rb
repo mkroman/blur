@@ -108,6 +108,7 @@ module Blur
       def inspect; %%#<SuperScript:0x#{self.object_id.to_s 16}>% end
 
       alias :author :authors
+      alias :Authors :Author
     end
 
     # Called when when the superscript has been loaded and added to the list of
@@ -127,6 +128,9 @@ module Blur
 
     # Called right before the instance of the script is being removed.
     def unloaded; end
+
+    # Gets the instantiated script with +name+.
+    def script name; _client_ref.scripts[name] end
 
     # Gets a human-readable representation of the script.
     def inspect
