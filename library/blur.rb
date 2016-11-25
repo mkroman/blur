@@ -29,12 +29,13 @@ module Blur
   # Contains all superscript classes for scripts that may be used.
   @@scripts = {}
 
-  # Creates a new superscript class.
+  # Creates a new superscript class and inserts it into the list of scripts.
   def self.Script name, *args, &block
     klass = Class.new SuperScript
     klass.name = name
     klass.events = {}
     klass.class_exec &block
+    klass.init
 
     @@scripts[name] = klass
   end
@@ -42,6 +43,15 @@ module Blur
   # Gets all superscript classes.
   def self.scripts
     @@scripts
+  end
+
+  # Resets all scripts.
+  #
+  # This method will call `deinit` on each script class before removing them to
+  # give them a chance to clean up.
+  def self.reset_scripts!
+    @@scripts.each &:deinit
+    @@scripts.clear
   end
 
   # Instantiates a client with given options and then makes the client instance

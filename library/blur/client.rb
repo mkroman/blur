@@ -143,13 +143,15 @@ module Blur
     end
 
     # Unloads initialized scripts and superscripts.
+    #
+    # This method will call #unloaded on the instance of each loaded script to
+    # give it a chance to clean up any resources.
     def unload_scripts!
       @scripts.each do |script|
         script.__send__ :unloaded if script.respond_to? :unloaded
-      end
+      end.clear
 
-      @scripts.clear
-      Blur.scripts.clear
+      Blur.reset_scripts!
     end
 
   private

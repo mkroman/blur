@@ -99,11 +99,25 @@ module Blur
       alias :author :authors
     end
 
-    attr_accessor :_client_ref, :config
+    # Called when when the superscript has been loaded and added to the list of
+    # superscripts.
+    def self.init; end
 
-    def unloaded
-    end
+    # Called right before the script is being removed from the list of
+    # superscripts.
+    def self.deinit; end
 
+    # Reference to the main client that holds the script.
+    attr_accessor :_client_ref
+
+    # Script-specific configuration that is read from the main configuration 
+    # file.
+    attr_accessor :config
+
+    # Called right before the instance of the script is being removed.
+    def unloaded; end
+
+    # Gets a human-readable representation of the script.
     def inspect
       "#<Script(#{self.class.name.inspect}) " \
         "@author=#{self.class.author.inspect} " \
