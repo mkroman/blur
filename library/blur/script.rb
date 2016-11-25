@@ -85,12 +85,23 @@ module Blur
       #   register! message: :on_message, connection_ready: :connected
       def register! *args
         args.each do |events|
-          if events.is_a? Array
-            (@events[event] ||= []).concat events
-          else
-            events.each{|event, method| (@events[event] ||= []) << method }
+          case events
+          when Hash
+            events.each do |event, method_name|
+              register_event! event, method_name
+            end
+          when Array
+            register! *events
+          when Symbol
+            register_event! events
           end
         end
+      end
+
+      # Adds the given event +name+ and the name of the method to call once the
+      # event is emitted.
+      def register_event! name, method_name = name
+        (@events[name] ||= []) << method_name
       end
 
       def to_s; inspect end
