@@ -121,7 +121,7 @@ module Blur
 
       Dir.glob File.join(scripts_dir, '*.rb') do |file|
         begin
-          load file
+          load file, true
         rescue Exception => e
           STDERR.puts "The script `#{file}' failed to load"
           STDERR.puts "#{e.class}: #{e.message}"
