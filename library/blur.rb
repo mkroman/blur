@@ -50,7 +50,7 @@ module Blur
   # This method will call `deinit` on each script class before removing them to
   # give them a chance to clean up.
   def self.reset_scripts!
-    @@scripts.each &:deinit
+    @@scripts.each_value &:deinit
     @@scripts.clear
   end
 
