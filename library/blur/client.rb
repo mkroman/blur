@@ -22,7 +22,7 @@ module Blur
       'blur' => {
         'cache_dir' => 'cache/',
         'scripts_dir' => 'scripts/',
-        'networks' => {}
+        'networks' => []
       },
       'scripts' => {},
     }.freeze
@@ -166,7 +166,7 @@ module Blur
 
       if config.key? @environment
         @config = config[@environment]
-        @config.deep_merge DEFAULT_CONFIG
+        @config.deeper_merge! DEFAULT_CONFIG
 
         emit :config_load
       else

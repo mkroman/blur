@@ -4,7 +4,7 @@ require 'yaml'
 require 'socket'
 require 'ostruct'
 require 'openssl'
-require 'deep_merge'
+require 'deep_merge/rails_compat'
 require 'eventmachine'
 
 # Require all library files.
