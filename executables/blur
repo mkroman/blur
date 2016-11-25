@@ -29,6 +29,10 @@ OptionParser.new do |opts|
     options[:environment] = environment
   end
 
+  opts.on '-r', '--require LIBRARY', 'Require the LIBRARY before running' do |lib|
+    require lib
+  end
+
   opts.on_tail '-h', '--help', 'Show this message' do
     puts opts
     exit
