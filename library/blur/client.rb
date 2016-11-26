@@ -118,6 +118,7 @@ module Blur
     # Loads all scripts in the script directory.
     def load_scripts!
       scripts_dir = File.expand_path @config['blur']['scripts_dir']
+      scripts_cache_dir = File.expand_path @config['blur']['cache_dir']
 
       Dir.glob File.join(scripts_dir, '*.rb') do |file|
         begin
@@ -134,6 +135,7 @@ module Blur
 
       Blur.scripts.each do |name, superscript|
         script = superscript.allocate
+        script.cache = ScriptCache.load name, scripts_cache_dir
         script.config = scripts_config.fetch name, {}
         script._client_ref = self
         script.send :initialize

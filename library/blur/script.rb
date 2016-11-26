@@ -126,6 +126,8 @@ module Blur
     # file.
     attr_accessor :config
 
+    attr_accessor :cache
+
     # Called right before the instance of the script is being removed.
     def unloaded; end
 
