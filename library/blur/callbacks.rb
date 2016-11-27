@@ -17,26 +17,14 @@ module Blur
     # @param name [Symbol] The event name.
     # @param args [optional, Array] The list of arguments to pass.
     def emit name, *args
-      begin
-        @scripts.select{|_, script| script.class.events.key? name }.each do |_, script|
-          script.class.events[name].each do |method|
-            if method.is_a? Proc
-              method.call script, *args
-            else
-              script.__send__ method, *args
-            end
-          end
-        end
-      rescue => e
-        puts "#{e.class}: #{e.message}"
-        puts e.backtrace
+      EM.defer do
+        notify_scripts name, *args
       end
 
-      callbacks = @@callbacks[name]
-      return if callbacks.nil? or callbacks.empty?
-
-      EM.defer do
-        callbacks.each {|callback| callback.(*args) }
+      if (callbacks = @@callbacks[name]) and callbacks.any?
+        EM.defer do
+          callbacks.each{|callback| callback.call *args }
+        end
       end
     end
 
@@ -46,6 +34,26 @@ module Blur
     # @yield [args, ...] The arguments passed from #emit.
     def on name, &block
       (@@callbacks[name] ||= []) << block
+    end
+
+  protected
+
+    def notify_scripts name, *args
+      scripts = @scripts.values.select{|script| script.class.events.key? name }
+      scripts.each do |script|
+        begin
+          script.class.events[name].each do |method|
+            if method.is_a? Proc
+              method.call script, *args
+            else
+              script.__send__ method, *args
+            end
+          end
+        rescue => exception
+          STDERR.puts "#{exception.class}: #{exception.message}"
+          STDERR.puts nil, 'Backtrace:', '---', exception.backtrace
+        end
+      end
     end
   end
 end
