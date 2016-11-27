@@ -158,8 +158,9 @@ module Blur
 
     # Called when the connection was closed.
     def disconnected!
-      @channels.each {|channel| channel.users.clear }
+      @channels.each {|name, channel| channel.users.clear }
       @channels.clear
+      @users.clear
 
       @client.network_connection_closed self
     end
