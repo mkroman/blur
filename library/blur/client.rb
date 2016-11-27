@@ -34,6 +34,8 @@ module Blur
     # @return [Hash] initialized scripts.
     attr_accessor :scripts
 
+    attr_accessor :verbose
+
     # Instantiates the client, stores the options, instantiates the networks
     # and then loads available scripts.
     #
@@ -45,6 +47,7 @@ module Blur
       @networks = []
       @config_path = options[:config_path]
       @environment = options[:environment]
+      @verbose = options[:verbose] == true
 
       load_config!
 
@@ -82,7 +85,9 @@ module Blur
     # @param [Network] network the network that received the command.
     # @param [Network::Command] command the received command.
     def got_command network, command
-      log "#{'←' ^ :green} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
+      if @verbose
+        log "#{'←' ^ :green} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
+      end
       name = :"got_#{command.name.downcase}"
 
       if respond_to? name

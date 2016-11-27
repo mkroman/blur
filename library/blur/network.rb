@@ -175,7 +175,10 @@ module Blur
     # @param [...] arguments all the prepended parameters.
     def transmit name, *arguments
       command = Command.new name, arguments
-      log "#{'→' ^ :red} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
+
+      if @client.verbose
+        log "#{'→' ^ :red} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
+      end
       
       @connection.send_data "#{command}\r\n"
     end
