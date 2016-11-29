@@ -115,9 +115,13 @@ module Blur
 
     # Reloads configuration file and scripts.
     def reload!
-      unload_scripts!
-      load_config!
-      load_scripts!
+      EM.schedule do
+        unload_scripts!
+        load_config!
+        load_scripts!
+
+        yield if block_given?
+      end
     end
 
     # Loads all scripts in the script directory.
