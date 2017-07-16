@@ -97,7 +97,7 @@ module Blur
         
         if user = network.users.delete(old_nick)
           new_nick = command[0]
-          emit :user_rename, channel, user, new_nick
+          emit :user_rename, user, new_nick
           user.nick = new_nick
           network.users[new_nick] = user
         end
