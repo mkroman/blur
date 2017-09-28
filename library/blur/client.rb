@@ -84,14 +84,14 @@ module Blur
     #
     # @param [Network] network the network that received the command.
     # @param [Network::Command] command the received command.
-    def got_command network, command
+    def got_message network, message
       if @verbose
-        log "#{'←' ^ :green} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
+        log "#{'←' ^ :green} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
       end
-      name = :"got_#{command.name.downcase}"
+      name = :"got_#{message.command.downcase}"
 
       if respond_to? name
-        __send__ name, network, command
+        __send__ name, network, message
       end
     end
     

@@ -95,8 +95,8 @@ module Blur
     end
     
     # Called when the network connection has enough data to form a command.
-    def got_command command
-      @client.got_command self, command
+    def got_message message
+      @client.got_message self, message
     rescue => e
       puts "#{e.class}: #{e.message}"
       puts
@@ -153,7 +153,7 @@ module Blur
     def connected!
       transmit :PASS, @options['password'] if @options['password']
       transmit :NICK, @options['nickname']
-      transmit :USER, @options['username'], :void, :void, @options['realname']
+      transmit :USER, @options['username'], 'void', 'void', @options['realname']
     end
 
     # Called when the connection was closed.
@@ -175,13 +175,13 @@ module Blur
     # @param [Symbol, String] name the command name.
     # @param [...] arguments all the prepended parameters.
     def transmit name, *arguments
-      command = Command.new name, arguments
+      message = IRCParser::Message.new command: name.to_s, parameters: arguments
 
       if @client.verbose
-        log "#{'→' ^ :red} #{command.name.to_s.ljust(8, ' ') ^ :light_gray} #{command.params.map(&:inspect).join ' '}"
+        log "#{'→' ^ :red} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
       end
       
-      @connection.send_data "#{command}\r\n"
+      @connection.send_data "#{message}\r\n"
     end
 
     # Send a private message.

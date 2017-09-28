@@ -4,8 +4,10 @@ require 'yaml'
 require 'socket'
 require 'ostruct'
 require 'openssl'
+
 require 'deep_merge/rails_compat'
 require 'eventmachine'
+require 'ircparser'
 
 # Require all library files.
 require 'blur/logging'
@@ -18,7 +20,6 @@ require 'blur/client'
 require 'blur/user'
 require 'blur/channel'
 require 'blur/enhancements'
-require 'blur/network/command'
 require 'blur/network/isupport'
 require 'blur/network/connection'
 

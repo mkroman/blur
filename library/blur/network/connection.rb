@@ -38,9 +38,9 @@ module Blur
       # Called when a line was received, the connection sends it to the network
       # delegate which then sends it to the client.
       def receive_line line
-        command = Command.parse line
+        message = IRCParser::Message.parse line
 
-        @network.got_command command
+        @network.got_message message
       end
 
       # Called when the SSL handshake was completed with the remote server,
