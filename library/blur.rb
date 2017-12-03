@@ -8,11 +8,13 @@ require 'openssl'
 require 'deep_merge/rails_compat'
 require 'eventmachine'
 require 'ircparser'
+require 'semverse'
 
 # Require all library files.
 require 'blur/logging'
 require 'blur/version'
 require 'blur/callbacks'
+require 'blur/dependency_graph'
 require 'blur/script'
 require 'blur/script_cache'
 require 'blur/network'
@@ -33,11 +35,7 @@ module Blur
 
   # Creates a new superscript class and inserts it into the list of scripts.
   def self.Script name, *args, &block
-    klass = Class.new SuperScript
-    klass.name = name
-    klass.events = {}
-    klass.class_exec &block
-    klass.init
+    script = SuperScript.create name, *args, &block
 
     @@scripts[name] = klass
   end

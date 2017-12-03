@@ -18,7 +18,7 @@ module Blur
     # @param args [optional, Array] The list of arguments to pass.
     def emit name, *args
       EM.defer do
-        notify_scripts name, *args
+        notify_scripts name, *args if @scripts&.any?
       end
 
       if (callbacks = @@callbacks[name]) and callbacks.any?

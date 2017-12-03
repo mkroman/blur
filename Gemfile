@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 gem 'ircparser', '~> 0.5'
 gem 'eventmachine', '~> 1.2'
 gem 'deep_merge', '~> 1.1'
+gem 'semverse', '~> 2.0'
 
 # Testing dependencies.
 group :test do

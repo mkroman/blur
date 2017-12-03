@@ -52,8 +52,26 @@ module Blur
   end
 
   class SuperScript
+    # @return [Semverse::Version] default version for new scripts.
+    DEFAULT_VERSION = Semverse::Version.new('0.0.0').freeze
+
+    # Creates a new class instance of a SuperScript and evaluates the given
+    # +block+ inside the new class.
+    def self.create script_name = nil, &block
+      raise ArgumentError, 'no block given' unless block_given?
+
+      klass = Class.new Blur::SuperScript
+      klass.name = script_name
+      klass.events = {}
+      klass.dependencies = {}
+      klass.version = DEFAULT_VERSION
+      klass.class_exec &block
+      klass.init
+      klass
+    end
+
     class << self
-      attr_accessor :name, :authors, :version, :description, :events
+      attr_accessor :name, :authors, :version, :description, :events, :dependencies
 
       # Sets the author.
       # 
@@ -73,10 +91,20 @@ module Blur
 
       # Sets the version.
       #
+      # @param [#to_s] version
+      #
       # @example
       #   Version '1.0.0'
       def Version version
-        @version = version
+        @version = Semverse::Version.new version.to_s
+      end
+
+      # Adds a dependency.
+      #
+      # @param name Script name of the dependency.
+      # @param version Script version constraint.
+      def Dependency name, version
+        @dependencies[name] = version
       end
 
       # Registers events to certain functions.
@@ -104,8 +132,8 @@ module Blur
         (@events[name] ||= []) << method_name
       end
 
-      def to_s; inspect end
-      def inspect; %%#<SuperScript:0x#{self.object_id.to_s 16}>% end
+      def to_s; self.class.name end
+      # def inspect; %%#<SuperScript:0x#{self.object_id.to_s 16}>% end
 
       alias :author :authors
       alias :Authors :Author
