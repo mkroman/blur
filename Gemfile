@@ -1,9 +1,9 @@
 source 'https://rubygems.org'
 
 # Project dependencies.
-gem 'ircparser', '~> 0.5'
+gem 'ircparser', '~> 0.6'
 gem 'eventmachine', '~> 1.2'
-gem 'deep_merge', '~> 1.1'
+gem 'deep_merge', '~> 1.2'
 
 # Testing dependencies.
 group :test do
