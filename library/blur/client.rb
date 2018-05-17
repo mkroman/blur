@@ -128,8 +128,19 @@ module Blur
     def load_scripts!
       scripts_dir = File.expand_path @config['blur']['scripts_dir']
       scripts_cache_dir = File.expand_path @config['blur']['cache_dir']
+      scripts_file_paths = Dir.glob File.join scripts_dir, '*.rb'
 
-      Dir.glob File.join(scripts_dir, '*.rb') do |file|
+      # Sort the script file paths by file name so they load by alphabetical
+      # order.
+      #
+      # This will make it possible to create a script called '10_database.rb'
+      # which will be loaded before '20_settings.rb' and non-numeric prefixes
+      # will be loaded after that.
+      scripts_file_paths = scripts_file_paths.sort do |a, b|
+        File.basename(a) <=> File.basename(b)
+      end
+
+      scripts_file_paths.each do |file|
         begin
           load file, true
         rescue Exception => e
