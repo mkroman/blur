@@ -2,6 +2,7 @@
 
 require 'yaml'
 require 'socket'
+require 'logging'
 require 'ostruct'
 require 'openssl'
 
@@ -10,7 +11,6 @@ require 'eventmachine'
 require 'ircparser'
 
 # Require all library files.
-require 'blur/logging'
 require 'blur/version'
 require 'blur/callbacks'
 require 'blur/script'
@@ -22,6 +22,31 @@ require 'blur/channel'
 require 'blur/enhancements'
 require 'blur/network/isupport'
 require 'blur/network/connection'
+
+Logging.color_scheme('meta',
+  levels: {
+    debug: :white,
+    info:  :cyan,
+    warn:  :yellow,
+    error: :red,
+    fatal: :orange
+  },
+  date: :white,
+  logger: [:white, :bold],
+  message: :white,
+)
+
+Logging.appenders.stdout(
+  'stdout',
+  layout: Logging.layouts.pattern(
+    pattern: '%d %-24.24c %-5l %m\n',
+    date_pattern: '%Y-%m-%d %H:%M:%S',
+    color_scheme: 'meta'
+  )
+)
+
+Logging.logger.root.appenders = Logging.appenders.stdout
+Logging.logger.root.level = :debug
 
 # Blur is a very modular IRC-framework for ruby.
 #

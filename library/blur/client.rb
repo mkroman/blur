@@ -9,7 +9,7 @@ module Blur
   # distributing the incoming commands to the right networks and scripts.
   class Client
     include Callbacks
-    include Handling, Logging
+    include Handling
 
     # Client error.
     Error = Class.new StandardError
@@ -26,7 +26,7 @@ module Blur
       },
       'scripts' => {},
     }.freeze
-    
+
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
     # @return [Hash] client configuration.
@@ -43,6 +43,7 @@ module Blur
     # @option options [String] :config_path path to a configuration file.
     # @option options [String] :environment the client environment.
     def initialize options = {}
+      @log = Logging.logger[self]
       @scripts = {}
       @networks = []
       @config_path = options[:config_path]
@@ -61,23 +62,23 @@ module Blur
 
       trap 2, &method(:quit)
     end
-    
+
     # Connect to each network available that is not already connected, then
     # proceed to start the run-loop.
     def connect
       networks = @networks.reject &:connected?
-      
+
       EventMachine.run do
         load_scripts!
         networks.each &:connect
 
         EventMachine.error_handler do |exception|
-          log.error "#{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+          @log.error "#{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
           puts exception.backtrace.join "\n"
         end
       end
     end
-    
+
     # Is called when a command have been received and parsed, this distributes
     # the command to the loader, which then further distributes it to events
     # and scripts.
@@ -86,7 +87,7 @@ module Blur
     # @param [Network::Command] command the received command.
     def got_message network, message
       if @verbose
-        log "#{'←' ^ :green} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
+        @log.debug "#{'←' ^ :green} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
       end
       name = :"got_#{message.command.downcase}"
 
@@ -94,12 +95,12 @@ module Blur
         __send__ name, network, message
       end
     end
-    
+
     # Called when a network connection is either closed, or terminated.
     def network_connection_closed network
       emit :connection_close, network
     end
-    
+
     # Try to gracefully disconnect from each network, unload all scripts and
     # exit properly.
     #
@@ -109,7 +110,7 @@ module Blur
         network.transmit :QUIT, "Got SIGINT?"
         network.disconnect
       end
-      
+
       EventMachine.stop
     end
 

@@ -7,7 +7,7 @@ module Blur
   # for network-related structures, such as {User}, {Channel} and {Command}.
   class Network
     include Logging
-    
+
     # +ConnectionError+ should only be triggered from within {Connection}.
     class ConnectionError < StandardError; end
 
@@ -39,7 +39,7 @@ module Blur
     #
     # @return [Fixnum] the remote port
     def port; @options['port'] ||= secure? ? 6697 : 6667 end
-    
+
     # Check to see if it's a secure connection.
     def secure?; @options['secure'] == true end
 
@@ -56,23 +56,24 @@ module Blur
     #   as "Name" when you whois a user.
     # @option options [optional, String] :password The password for the network.
     #   This is sometimes needed for private networks.
-    # @option options [optional, Fixnum] :port (6697 if ssl, otherwise 6667) 
+    # @option options [optional, Fixnum] :port (6697 if ssl, otherwise 6667)
     #   The remote port we want to connect to.
     # @option options [optional, Boolean] :secure Set whether this is a secure
     #   (SSL-encrypted) connection.
     # @option options [optional, String] :ssl_cert_file Local path of a
     #   readable file that contains a X509 CA certificate to validate against.
-    # @option options [optional, String] :ssl_fingerprint Validate that the 
+    # @option options [optional, String] :ssl_fingerprint Validate that the
     #   remote certificate matches the specified fingerprint.
     # @option options [optional, Boolean] :ssl_no_verify Disable verification
     #   alltogether.
     def initialize options, client = nil
+      @log = Logging.logger[self]
       @client = client
       @options = options
       @users = {}
       @channels = {}
       @isupport = ISupport.new self
-      
+
       unless options['nickname']
         if options['hostname']
           raise ArgumentError, "Network configuration for `#{options['hostname']}' is missing a nickname"
@@ -80,12 +81,12 @@ module Blur
           raise ArgumentError, "Network configuration is missing a nickname"
         end
       end
-      
+
       @options['username'] ||= @options['nickname']
       @options['realname'] ||= @options['username']
       @options['channels'] ||= []
     end
-    
+
     # Send a message to a recipient.
     #
     # @param [String, #to_s] recipient the recipient.
@@ -93,7 +94,7 @@ module Blur
     def say recipient, message
       transmit :PRIVMSG, recipient.to_s, message
     end
-    
+
     # Called when the network connection has enough data to form a command.
     def got_message message
       @client.got_message self, message
@@ -103,7 +104,7 @@ module Blur
       puts "---"
       puts e.backtrace
     end
-    
+
     # Find a channel by its name.
     #
     # @param [String] name the channel name.
@@ -111,7 +112,7 @@ module Blur
     def channel_by_name name
       @channels.find {|channel| channel.name == name }
     end
-    
+
     # Find all instances of channels in which there is a user with the nick
     # +nick+.
     #
@@ -164,12 +165,12 @@ module Blur
 
       @client.network_connection_closed self
     end
-    
+
     # Terminate the connection and clear all channels and users.
     def disconnect
       @connection.close_connection_after_writing
     end
-    
+
     # Transmit a command to the server.
     #
     # @param [Symbol, String] name the command name.
@@ -178,9 +179,9 @@ module Blur
       message = IRCParser::Message.new command: name.to_s, parameters: arguments
 
       if @client.verbose
-        log "#{'→' ^ :red} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
+        @log.debug "#{'→' ^ :red} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
       end
-      
+
       @connection.send_data "#{message}\r\n"
     end
 
