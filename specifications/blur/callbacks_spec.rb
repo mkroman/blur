@@ -7,6 +7,10 @@ end
 describe Blur::Callbacks do
   subject { CallbacksStub.new }
 
+  before do
+    subject.instance_variable_set(:@scripts, {})
+  end
+
   describe "included" do
     it "should initialise @callbacks" do
       callbacks = subject.callbacks
