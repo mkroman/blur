@@ -2,29 +2,27 @@
 
 module Blur
   module Callbacks
-    # Our list of callbacks.
-    @@callbacks = {}
-
     # Get a list of callbacks registered.
     #
     # @returns [Array] the list of callbacks
     def callbacks
-      @@callbacks
+      @callbacks ||= {}
     end
 
     # Emit a new event with given arguments.
     #
     # @param name [Symbol] The event name.
     # @param args [optional, Array] The list of arguments to pass.
+    # @return [true, false] True if any callbacks were invoked, nil otherwise
     def emit name, *args
-      EM.defer do
-        notify_scripts name, *args
-      end
+      # Trigger callbacks in scripts before triggering events in the client.
+      EM.defer { notify_scripts name, *args }
 
-      if (callbacks = @@callbacks[name]) and callbacks.any?
-        EM.defer do
-          callbacks.each{|callback| callback.call *args }
-        end
+      matching_callbacks = callbacks[name]
+      return false unless matching_callbacks&.any?
+
+      EM.defer do
+        matching_callbacks.each { |callback| callback.call *args }
       end
     end
 
@@ -33,10 +31,10 @@ module Blur
     # @param name [Symbol] The event name.
     # @yield [args, ...] The arguments passed from #emit.
     def on name, &block
-      (@@callbacks[name] ||= []) << block
+      (callbacks[name] ||= []) << block
     end
 
-  protected
+    protected
 
     def notify_scripts name, *args
       scripts = @scripts.values.select{|script| script.class.events.key? name }

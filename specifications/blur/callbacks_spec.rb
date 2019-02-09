@@ -26,7 +26,7 @@ describe Blur::Callbacks do
     let(:callbacks) { { test_1: [test_1, test_1_2], test_2: [test_2] } }
 
     before do
-      Blur::Callbacks.class_variable_set :@@callbacks, callbacks
+      allow_any_instance_of(Blur::Callbacks).to receive(:callbacks).and_return callbacks
       allow(EventMachine).to receive(:defer).and_yield
     end
 
