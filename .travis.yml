@@ -3,6 +3,8 @@ rvm:
   - 2.5.3
   - 2.6.0
 script: "bundle exec rspec"
+bundler_args: --without development
 notifications:
-    email: false
-    bundler_args: --without development
+  email: false
+  irc:
+    - 'ircs://irc.uplink.io#blur'
