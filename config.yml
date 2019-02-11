@@ -53,7 +53,7 @@ production: &base
 
 # Development-specific settings. This merges values with base (i.e. the
 # production configuration above.)
-development:
+development: &development
   <<: *base
   blur:
     networks:
@@ -64,3 +64,8 @@ development:
       - "#blur2"
       secure: true
       port: 6667
+
+# Testing-specific settings. This merges values with base (i.e. the
+# production configuration above.)
+testing:
+  <<: *development

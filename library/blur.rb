@@ -39,7 +39,7 @@ module Blur
     klass.class_exec &block
     klass.init
 
-    @@scripts[name] = klass
+    scripts[name] = klass
   end
 
   # Gets all superscript classes.
@@ -52,8 +52,8 @@ module Blur
   # This method will call `deinit` on each script class before removing them to
   # give them a chance to clean up.
   def self.reset_scripts!
-    @@scripts.each_value &:deinit
-    @@scripts.clear
+    scripts.each_value &:deinit
+    scripts.clear
   end
 
   # Instantiates a client with given options and then makes the client instance
