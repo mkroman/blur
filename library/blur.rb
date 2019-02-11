@@ -28,6 +28,8 @@ require 'blur/network/connection'
 # It allows the developer to extend it in multiple ways.
 # It can be by handlers, scripts, communications, and what have you.
 module Blur
+  class ConfigError < StandardError; end
+
   # Creates a new superscript class and inserts it into the list of scripts.
   def self.Script name, *args, &block
     klass = Class.new SuperScript

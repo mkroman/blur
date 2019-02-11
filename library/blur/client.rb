@@ -9,13 +9,14 @@ module Blur
   # distributing the incoming commands to the right networks and scripts.
   class Client
     include Callbacks
-    include Handling, Logging
+    include Handling
+    include Logging
 
     # Client error.
     Error = Class.new StandardError
 
     # The default environment.
-    ENVIRONMENT = ENV['BLUR_ENV'] || 'development'
+    ENVIRONMENT = ENV['BLUR_ENV'] || 'development'.freeze
 
     # The default configuration.
     DEFAULT_CONFIG = {
@@ -33,8 +34,10 @@ module Blur
     attr_accessor :config
     # @return [Hash] initialized scripts.
     attr_accessor :scripts
-
+    # @return [Boolean] whether verbose logging is enabled.
     attr_accessor :verbose
+    # @return [String] the path to the currently used config file.
+    attr_accessor :config_path
 
     # Instantiates the client, stores the options, instantiates the networks
     # and then loads available scripts.
@@ -49,11 +52,15 @@ module Blur
       @environment = options[:environment]
       @verbose = options[:verbose] == true
 
+      unless @config_path
+        raise ConfigError, 'missing config file path in :config_path option'
+      end
+
       load_config!
 
       networks = @config['blur']['networks']
 
-      if networks and networks.any?
+      if networks&.any?
         networks.each do |network_options|
           @networks.<< Network.new network_options, self
         end
@@ -106,10 +113,10 @@ module Blur
     # @param [optional, Symbol] signal The signal received by the system, if any.
     def quit signal = :SIGINT
       @networks.each do |network|
-        network.transmit :QUIT, "Got SIGINT?"
+        network.transmit :QUIT, 'Got SIGINT?'
         network.disconnect
       end
-      
+
       EventMachine.stop
     end
 
@@ -127,8 +134,7 @@ module Blur
     # Loads all scripts in the script directory.
     def load_scripts!
       scripts_dir = File.expand_path @config['blur']['scripts_dir']
-      scripts_cache_dir = File.expand_path @config['blur']['cache_dir']
-      scripts_file_paths = Dir.glob File.join scripts_dir, '*.rb'
+      script_file_paths = Dir.glob File.join scripts_dir, '*.rb'
 
       # Sort the script file paths by file name so they load by alphabetical
       # order.
@@ -136,22 +142,41 @@ module Blur
       # This will make it possible to create a script called '10_database.rb'
       # which will be loaded before '20_settings.rb' and non-numeric prefixes
       # will be loaded after that.
-      scripts_file_paths = scripts_file_paths.sort do |a, b|
+      script_file_paths = script_file_paths.sort do |a, b|
         File.basename(a) <=> File.basename(b)
       end
 
-      scripts_file_paths.each do |file|
-        begin
-          load file, true
-        rescue Exception => e
-          STDERR.puts "The script `#{file}' failed to load"
-          STDERR.puts "#{e.class}: #{e.message}"
-          STDERR.puts
-          STDERR.puts 'Backtrace:', '---', e.backtrace
-        end
-      end
+      script_file_paths.each { |script_path| load_script_file script_path }
 
+      initialize_superscripts
+
+      emit :scripts_loaded
+    end
+
+    # Loads the given +file_path+ as a Ruby script, wrapping it in an anonymous
+    # module to protect our global namespace.
+    #
+    # @param [String] file_path the path to the ruby script.
+    #
+    # @raise [Exception] if there was any problems loading the file
+    def load_script_file file_path
+      load file_path, true
+    rescue Exception => exception
+      warn "The script `#{file_path}' failed to load"
+      warn "#{exception.class}: #{exception.message}"
+      warn ''
+      warn 'Backtrace:', '---', exception.backtrace
+    end
+
+    # Instantiates each +SuperScript+ in the +Blur.scripts+ list by manually
+    # allocating an instance and calling #initialize on it, then the instance is
+    # stored in +Client#scripts+.
+    #
+    # @raise [Exception] any exception that might occur in any scripts'
+    #   #initialize method.
+    def initialize_superscripts
       scripts_config = @config['scripts']
+      scripts_cache_dir = File.expand_path @config['blur']['cache_dir']
 
       Blur.scripts.each do |name, superscript|
         script = superscript.allocate
@@ -162,8 +187,6 @@ module Blur
 
         @scripts[name] = script
       end
-
-      emit :scripts_loaded
     end
 
     # Unloads initialized scripts and superscripts.
@@ -178,7 +201,7 @@ module Blur
       Blur.reset_scripts!
     end
 
-  private
+    private
 
     # Load the user-specified configuration file.
     #
