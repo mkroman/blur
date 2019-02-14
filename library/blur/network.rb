@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 module Blur
   # The +Network+ module is to be percieved as an IRC network.
@@ -7,13 +7,21 @@ module Blur
   # for network-related structures, such as {User}, {Channel} and {Command}.
   class Network
     include Logging
-    
+
     # +ConnectionError+ should only be triggered from within {Connection}.
     class ConnectionError < StandardError; end
 
+    # Returns a unique identifier for this network.
+    #
+    # You can override the id in your network configuration by setting an 'id'
+    # key with the id you want.. If no id is specified, the the id will be
+    # constructed from the hostname and port number
+    # in the format "<host>:<port>"
+    #
+    # @return [String] the unique identifier for this network.
+    attr_reader :id
     # @return [Hash] the network options.
     attr_accessor :options
-
     # @return [Hash] the map of users that is known.
     attr_accessor :users
     # @return [Hash] the map of channels the client is in.
@@ -26,22 +34,30 @@ module Blur
     attr_accessor :isupport
 
     # Check whether or not connection is established.
-    def connected?; @connection and @connection.established? end
+    def connected?
+      @connection&.established?
+    end
 
     # Get the remote hostname.
     #
     # @return [String] the remote hostname.
-    def host; @options['hostname'] end
+    def host
+      @options['hostname']
+    end
 
     # Get the remote port.
     # If no port is specified, it returns 6697 if using a secure connection,
     # returns 6667 otherwise.
     #
     # @return [Fixnum] the remote port
-    def port; @options['port'] ||= secure? ? 6697 : 6667 end
-    
+    def port
+      @options['port'] ||= secure? ? 6697 : 6667
+    end
+
     # Check to see if it's a secure connection.
-    def secure?; @options['secure'] == true end
+    def secure?
+      @options['secure'] == true
+    end
 
     # Instantiates the network.
     #
@@ -52,17 +68,17 @@ module Blur
     # @option options [optional, String] :username (Copies :nickname)
     #   The username to use. This is also known as the ident.
     # @option options [optional, String] :realname (Copies :username)
-    #   The “real name” that we want to use. This is usually what shows up
+    #   The "real name" that we want to use. This is usually what shows up
     #   as "Name" when you whois a user.
     # @option options [optional, String] :password The password for the network.
     #   This is sometimes needed for private networks.
-    # @option options [optional, Fixnum] :port (6697 if ssl, otherwise 6667) 
+    # @option options [optional, Fixnum] :port (6697 if ssl, otherwise 6667)
     #   The remote port we want to connect to.
     # @option options [optional, Boolean] :secure Set whether this is a secure
     #   (SSL-encrypted) connection.
     # @option options [optional, String] :ssl_cert_file Local path of a
     #   readable file that contains a X509 CA certificate to validate against.
-    # @option options [optional, String] :ssl_fingerprint Validate that the 
+    # @option options [optional, String] :ssl_fingerprint Validate that the
     #   remote certificate matches the specified fingerprint.
     # @option options [optional, Boolean] :ssl_no_verify Disable verification
     #   alltogether.
@@ -72,20 +88,20 @@ module Blur
       @users = {}
       @channels = {}
       @isupport = ISupport.new self
-      
+
       unless options['nickname']
         if options['hostname']
-          raise ArgumentError, "Network configuration for `#{options['hostname']}' is missing a nickname"
-        else
-          raise ArgumentError, "Network configuration is missing a nickname"
+          raise ArgumentError, 'Network configuration for ' \
+            "`#{id}' is missing a nickname"
         end
       end
-      
+
       @options['username'] ||= @options['nickname']
       @options['realname'] ||= @options['username']
       @options['channels'] ||= []
+      @id = options.fetch 'id', "#{options['hostname']}:#{options['port']}"
     end
-    
+
     # Send a message to a recipient.
     #
     # @param [String, #to_s] recipient the recipient.
@@ -93,53 +109,55 @@ module Blur
     def say recipient, message
       transmit :PRIVMSG, recipient.to_s, message
     end
-    
+
+    # Forwards the received message to the client instance.
+    #
     # Called when the network connection has enough data to form a command.
     def got_message message
       @client.got_message self, message
-    rescue => e
-      puts "#{e.class}: #{e.message}"
+    rescue StandardError => exception
+      puts "#{exception.class}: #{exception.message}"
       puts
-      puts "---"
-      puts e.backtrace
+      puts '---'
+      puts exception.backtrace
     end
-    
+
     # Find a channel by its name.
     #
     # @param [String] name the channel name.
     # @return [Network::Channel] the matching channel, or nil.
     def channel_by_name name
-      @channels.find {|channel| channel.name == name }
+      @channels.find { |channel| channel.name == name }
     end
-    
+
     # Find all instances of channels in which there is a user with the nick
     # +nick+.
     #
     # @param [String] nick the nickname.
     # @return [Array] a list of channels in which the user is located, or nil.
     def channels_with_user nick
-      @channels.select {|channel| channel.user_by_nick nick }
+      @channels.select { |channel| channel.user_by_nick nick }
     end
 
     # Returns a list of user prefixes that a nick might contain.
     #
     # @return [Array<String>] a list of user prefixes.
     def user_prefixes
-      isupport["PREFIX"].values
+      isupport['PREFIX'].values
     end
 
     # Returns a list of user modes that also gives a users nick a prefix.
     #
     # @return [Array<String>] a list of user modes.
     def user_prefix_modes
-      isupport["PREFIX"].keys
+      isupport['PREFIX'].keys
     end
 
     # Returns a list of channel flags (channel mode D).
     #
     # @return [Array<String>] a list of channel flags.
     def channel_flags
-      isupport["CHANMODES"]["D"]
+      isupport['CHANMODES']['D']
     end
 
     # Attempt to establish a connection and send initial data.
@@ -158,18 +176,18 @@ module Blur
 
     # Called when the connection was closed.
     def disconnected!
-      @channels.each {|name, channel| channel.users.clear }
+      @channels.each { |_name, channel| channel.users.clear }
       @channels.clear
       @users.clear
 
       @client.network_connection_closed self
     end
-    
+
     # Terminate the connection and clear all channels and users.
     def disconnect
       @connection.close_connection_after_writing
     end
-    
+
     # Transmit a command to the server.
     #
     # @param [Symbol, String] name the command name.
@@ -178,9 +196,11 @@ module Blur
       message = IRCParser::Message.new command: name.to_s, parameters: arguments
 
       if @client.verbose
-        log "#{'→' ^ :red} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
+        formatted_command = message.command.to_s.ljust 8, ' '
+        formatted_params = message.parameters.map(&:inspect).join ' '
+        log "#{'→' ^ :red} #{formatted_command} #{formatted_params}"
       end
-      
+
       @connection.send_data "#{message}\r\n"
     end
 
@@ -196,7 +216,7 @@ module Blur
 
     # Convert it to a debug-friendly format.
     def to_s
-      %{#<#{self.class.name} "#{host}":#{port}>}
+      %(#<#{self.class.name} "#{host}":#{port}>)
     end
   end
 end
