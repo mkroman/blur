@@ -1,0 +1,6 @@
+Lint/AmbiguousOperator:
+  Enabled: false
+Style/MethodDefParentheses:
+  Enabled: false
+AllCops:
+  TargetRubyVersion: 2.6
