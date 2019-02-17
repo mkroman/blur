@@ -1,6 +1,6 @@
-require_relative '../../spec_helper'
+require_relative '../spec_helper'
 
-Rspec.describe Blur::Network do
+RSpec.describe Blur::Network do
   describe '.new' do
     context 'when no nickname is supplied' do
       it 'should raise an error'
