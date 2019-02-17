@@ -90,16 +90,14 @@ module Blur
       @isupport = ISupport.new self
 
       unless options['nickname']
-        if options['hostname']
-          raise ArgumentError, 'Network configuration for ' \
-            "`#{id}' is missing a nickname"
-        end
+        raise ArgumentError, 'Network configuration for ' \
+          "`#{id}' is missing a nickname"
       end
 
       @options['username'] ||= @options['nickname']
       @options['realname'] ||= @options['username']
       @options['channels'] ||= []
-      @id = options.fetch 'id', "#{options['hostname']}:#{options['port']}"
+      @id = options.fetch 'id', "#{host}:#{port}"
     end
 
     # Send a message to a recipient.
