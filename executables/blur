@@ -5,6 +5,35 @@ $:.unshift File.join __dir__, '../library'
 
 require 'optparse'
 
+require 'logging'
+
+
+Logging.color_scheme(
+  'meta',
+  levels: {
+    debug: :white,
+    info: :cyan,
+    warn: :yellow,
+    error: :red,
+    fatal: :orange
+  },
+  date: :white,
+  logger: %i[white bold],
+  message: :white
+)
+
+Logging.appenders.stdout(
+  'stdout',
+  layout: Logging.layouts.pattern(
+    pattern: '%d %-16.16c %-5l %m\n',
+    date_pattern: '%Y-%m-%d %H:%M:%S',
+    color_scheme: 'meta'
+  )
+)
+
+Logging.logger.root.level = :debug
+Logging.logger.root.appenders = Logging.appenders.stdout
+
 options = {
   verbose: false,
   environment: 'development',

@@ -83,9 +83,17 @@ module Blur
       
       # Called when the server needs to verify that we're alive.
       def got_ping network, message
+        network.last_pong_time = Time.now
         network.transmit :PONG, message.parameters[0]
 
-        emit :network_ping, message.parameters[0]
+        emit :network_ping, network, message.parameters[0]
+      end
+
+      # Called when the server reponds to our periodic PINGs.
+      def got_pong network, message
+        network.last_pong_time = Time.now
+        
+        emit :network_pong, network, message.parameters[0]
       end
       
       # Called when a user changed nickname.
