@@ -5,7 +5,6 @@ require 'socket'
 require 'ostruct'
 require 'openssl'
 
-require 'logging'
 require 'deep_merge/rails_compat'
 require 'eventmachine'
 require 'ircparser'

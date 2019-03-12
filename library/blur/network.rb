@@ -98,7 +98,7 @@ module Blur
     def initialize options, client = nil
       @client = client
       @options = options
-      @log = ::Logging.logger[self]
+      #@log = ::Logging.logger[self]
       @users = {}
       @channels = {}
       @isupport = ISupport.new self
@@ -179,13 +179,13 @@ module Blur
     #
     # @see Connection
     def connect
-      @log.info "Connecting to #{self}"
+      #@log.info "Connecting to #{self}"
 
       begin
         @connection = EventMachine.connect host, port, Connection, self
       rescue EventMachine::ConnectionError => err
-        @log.warn "Establishing connection to #{self} failed!"
-        @log.warn err.message
+        #@log.warn "Establishing connection to #{self} failed!"
+        #@log.warn err.message
 
         schedule_reconnect
         return
@@ -198,7 +198,7 @@ module Blur
 
     # Schedules a reconnect after a user-specified number of seconds.
     def schedule_reconnect
-      @log.info "Reconnecting to #{self} in #{@reconnect_interval} seconds"
+      #@log.info "Reconnecting to #{self} in #{@reconnect_interval} seconds"
 
       EventMachine.add_timer @reconnect_interval do
         connect
@@ -208,7 +208,7 @@ module Blur
     def server_connection_timeout
       @connection.close_connection
 
-      @log.warn "Connection to #{self} timed out"
+      # @log.warn "Connection to #{self} timed out"
     end
 
     def periodic_ping_check
@@ -216,7 +216,7 @@ module Blur
       seconds_since_pong = now - @last_pong_time
 
       if seconds_since_pong >= @server_ping_interval_max
-        @log.info "No PING request from the server in #{seconds_since_pong}s!"
+        # @log.info "No PING request from the server in #{seconds_since_pong}s!"
 
         transmit 'PING', now.to_s
 
@@ -227,7 +227,7 @@ module Blur
           if @last_pong_time == previous_pong_time
             server_connection_timeout
           else
-            @log.debug 'Received PONG from server in time. Connection is okay.'
+            #@log.debug 'Received PONG from server in time. Connection is okay.'
           end
         end
       end
@@ -249,7 +249,7 @@ module Blur
       @users.clear
       @ping_timer.cancel
 
-      @log.debug "Connection to #{self} lost!"
+      #@log.debug "Connection to #{self} lost!"
       @client.network_connection_closed self
 
       if @options.fetch('reconnect', DEFAULT_RECONNECT)
