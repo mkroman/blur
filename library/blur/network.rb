@@ -11,6 +11,9 @@ module Blur
     # +ConnectionError+ should only be triggered from within {Connection}.
     class ConnectionError < StandardError; end
 
+    DEFAULT_PING_INTERVAL = 30
+    DEFAULT_RECONNECT = true
+
     # Returns a unique identifier for this network.
     #
     # You can override the id in your network configuration by setting an 'id'
@@ -34,6 +37,15 @@ module Blur
     attr_accessor :isupport
     # @return [Boolean] true if we're waiting for a capability negotiation.
     attr_reader :waiting_for_cap
+    # @return [Time] the last time a pong was sent or received.
+    attr_accessor :last_pong_time
+    # The max PING interval for the server. This is used to determine when the
+    # client will attempt to send its own PING command.
+    #
+    # @note the actual time until a client PING is sent can vary by an
+    #   additional 0-30 seconds.
+    # @return [Number] the max interval between pings from a server.
+    attr_accessor :server_ping_interval_max
 
     # Check whether or not connection is established.
     def connected?
@@ -94,9 +106,13 @@ module Blur
     def initialize options, client = nil
       @client = client
       @options = options
+      #@log = ::Logging.logger[self]
       @users = {}
       @channels = {}
       @isupport = ISupport.new self
+      @reconnect_interval = 3
+      @server_ping_interval_max = @options.fetch('server_ping_interval',
+                                                 150).to_i
 
       unless options['nickname']
         raise ArgumentError, 'Network configuration for ' \
@@ -171,8 +187,59 @@ module Blur
     #
     # @see Connection
     def connect
-      @connection = EventMachine.connect host, port, Connection, self
+      #@log.info "Connecting to #{self}"
+
+      begin
+        @connection = EventMachine.connect host, port, Connection, self
+      rescue EventMachine::ConnectionError => err
+        #@log.warn "Establishing connection to #{self} failed!"
+        #@log.warn err.message
+
+        schedule_reconnect
+        return
+      end
+
+      @ping_timer = EventMachine.add_periodic_timer DEFAULT_PING_INTERVAL do
+        periodic_ping_check
+      end
     end
+
+    # Schedules a reconnect after a user-specified number of seconds.
+    def schedule_reconnect
+      #@log.info "Reconnecting to #{self} in #{@reconnect_interval} seconds"
+
+      EventMachine.add_timer @reconnect_interval do
+        connect
+      end
+    end
+
+    def server_connection_timeout
+      @connection.close_connection
+
+      # @log.warn "Connection to #{self} timed out"
+    end
+
+    def periodic_ping_check
+      now = Time.now
+      seconds_since_pong = now - @last_pong_time
+
+      if seconds_since_pong >= @server_ping_interval_max
+        # @log.info "No PING request from the server in #{seconds_since_pong}s!"
+
+        transmit 'PING', now.to_s
+
+        # Wait 15 seconds and declare a timeout if we didn't get a PONG.
+        previous_pong_time = @last_pong_time.dup
+
+        EventMachine.add_timer 15 do
+          if @last_pong_time == previous_pong_time
+            server_connection_timeout
+          else
+            #@log.debug 'Received PONG from server in time. Connection is okay.'
+          end
+        end
+      end
+    end 
 
     # Called when the connection was successfully established.
     def connected!
@@ -185,6 +252,8 @@ module Blur
       transmit :PASS, @options['password'] if @options['password']
       transmit :NICK, @options['nickname']
       transmit :USER, @options['username'], 'void', 'void', @options['realname']
+
+      @last_pong_time = Time.now
     end
 
     # Called when the server doesn't support capability negotiation.
@@ -203,11 +272,17 @@ module Blur
 
     # Called when the connection was closed.
     def disconnected!
-      @channels.each { |_name, channel| channel.users.clear }
+      @channels.each { |_, channel| channel.users.clear }
       @channels.clear
       @users.clear
+      @ping_timer.cancel
 
+      #@log.debug "Connection to #{self} lost!"
       @client.network_connection_closed self
+
+      if @options.fetch('reconnect', DEFAULT_RECONNECT)
+        schedule_reconnect
+      end
     end
 
     # Terminate the connection and clear all channels and users.

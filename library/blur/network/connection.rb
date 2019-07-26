@@ -13,14 +13,23 @@ module Blur
     class Connection < EM::Protocols::LineAndTextProtocol
       SSLValidationError = Class.new StandardError
 
+      # @return [Float] the default connection timeout interval in seconds.
+      DEFAULT_CONNECT_TIMEOUT_INTERVAL = 30
+
       # Check whether or not connection is established.
-      def established?; @connected == true end
+      def established?
+        @connected == true
+      end
 
       # EventMachine instantiates this class, and then sends event messages to
       # that instance.
       def initialize network
         @network = network
         @connected = false
+        connect_timeout = network.options.fetch 'connect_timeout',
+                                                DEFAULT_CONNECT_TIMEOUT_INTERVAL
+
+        self.pending_connect_timeout = connect_timeout
 
         super
       end
@@ -28,11 +37,10 @@ module Blur
       # Called when a new connection is being set up, all we're going to use
       # it for is to enable SSL/TLS on our connection.
       def post_init
-        if @network.secure?
-          verify_peer = (@network.options[:ssl_no_verify] ? false : true)
+        return unless @network.secure?
 
-          start_tls verify_peer: verify_peer
-        end
+        verify_peer = (@network.options[:ssl_no_verify] ? false : true)
+        start_tls verify_peer: verify_peer
       end
 
       # Called when a line was received, the connection sends it to the network
