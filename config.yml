@@ -64,6 +64,9 @@ development: &development
       - "#blur2"
       secure: true
       port: 6667
+#     sasl:
+#       username: user
+#       password: password
 
 # Testing-specific settings. This merges values with base (i.e. the
 # production configuration above.)

@@ -2,6 +2,7 @@
 
 require 'yaml'
 require 'socket'
+require 'base64'
 require 'ostruct'
 require 'openssl'
 

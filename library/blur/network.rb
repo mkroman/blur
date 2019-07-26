@@ -32,6 +32,8 @@ module Blur
     attr_accessor :connection
     # @return [Network::ISupport] the network isupport specs.
     attr_accessor :isupport
+    # @return [Boolean] true if we're waiting for a capability negotiation.
+    attr_reader :waiting_for_cap
 
     # Check whether or not connection is established.
     def connected?
@@ -57,6 +59,13 @@ module Blur
     # Check to see if it's a secure connection.
     def secure?
       @options['secure'] == true
+    end
+
+    # @return [Boolean] whether we want to authenticate with SASL.
+    def sasl?
+      @options['sasl'] &&
+        @options['sasl']['username'] &&
+        @options['sasl']['password']
     end
 
     # Instantiates the network.
@@ -167,9 +176,29 @@ module Blur
 
     # Called when the connection was successfully established.
     def connected!
+      if sasl?
+        @waiting_for_cap = true
+
+        transmit :CAP, 'REQ', 'sasl'
+      end
+
       transmit :PASS, @options['password'] if @options['password']
       transmit :NICK, @options['nickname']
       transmit :USER, @options['username'], 'void', 'void', @options['realname']
+    end
+
+    # Called when the server doesn't support capability negotiation.
+    def abort_cap_neg
+      @waiting_for_cap = false
+
+      puts "Server does not support capability negotiation"
+    end
+
+    # Called when we're done with capability negotiation.
+    def cap_end
+      @waiting_for_cap = false
+
+      transmit :CAP, 'END'
     end
 
     # Called when the connection was closed.

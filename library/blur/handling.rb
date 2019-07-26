@@ -247,6 +247,67 @@ module Blur
         network.isupport.parse *params
       end
 
+      # Received when the server supports capability negotiation.
+      def got_cap network, message
+        id, command = message.parameters[0..1]
+
+        case command
+        when 'ACK'
+          capabilities = message.parameters[2]&.split
+
+          if capabilities&.include? 'sasl' and network.sasl?
+            network.transmit :AUTHENTICATE, 'PLAIN'
+          else
+            network.cap_end
+          end
+        when 'NAK'
+          capabilities = message.parameters[2]&.split
+
+          if capabilities&.include? 'sasl' and network.sasl?
+            puts "The server does not support SASL, but you've configured it " \
+              "as such! Disconnecting!"
+
+            network.disconnect
+          end
+
+        end
+      end
+
+      def got_001 network, message
+        if network.waiting_for_cap
+          network.abort_cap_neg
+        end
+      end
+
+      def got_authenticate network, message
+        case message.parameters[0]
+        when '+'
+          return unless network.sasl?
+          sasl = network.options['sasl']
+
+          response = "#{sasl['username']}\x00#{sasl['username']}\x00#{sasl['password']}"
+          network.transmit :AUTHENTICATE, Base64.encode64(response).strip
+        end
+      end
+
+      # :server 900 <nick> <nick>!<ident>@<host> <account> :You are now logged in as <user>
+      # RPL_LOGGEDIN SASL
+      def got_900 network, message
+        if network.waiting_for_cap
+          network.cap_end
+        end
+      end
+
+      # :server 904 <nick> :SASL authentication failed
+      # ERR_SASLFAIL
+      def got_904 network, message
+        nick, message = message.parameters
+
+        puts "SASL authentication failed! Disconnecting!"
+
+        network.disconnect
+      end
+
       alias_method :got_353, :got_name_reply
       alias_method :got_422, :got_end_of_motd
       alias_method :got_376, :got_end_of_motd
