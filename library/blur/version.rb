@@ -2,7 +2,7 @@
 
 module Blur
   # The current version of Blur.
-  Version = '2.1.3'.freeze
+  Version = '2.1.4'.freeze
 
   # Get the current version.
   #
