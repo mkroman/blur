@@ -256,28 +256,43 @@ module Blur
       end
 
       # Received when the server supports capability negotiation.
+      #
+      # CAP * LS :multi-prefix sasl
       def got_cap network, message
-        id, command = message.parameters[0..1]
+        _id, command = message.parameters[0..1]
 
         case command
+        when 'LS'
+          capabilities = message.parameters[2]&.split
+
+          if capabilities.include?('sasl') && network.sasl?
+            network.transmit :AUTHENTICATE, 'PLAIN'
+          else
+            network.transmit :CAP, 'END'
+          end
+
+          capabilities.each{|name| network.capabilities.push name }
+
+          emit :network_capabilities, network, capabilities
+
         when 'ACK'
           capabilities = message.parameters[2]&.split
 
-          if capabilities&.include? 'sasl' and network.sasl?
+          if capabilities&.include? 'sasl' && network.sasl?
             network.transmit :AUTHENTICATE, 'PLAIN'
           else
             network.cap_end
           end
+
         when 'NAK'
           capabilities = message.parameters[2]&.split
 
-          if capabilities&.include? 'sasl' and network.sasl?
+          if capabilities&.include? 'sasl' && network.sasl?
             puts "The server does not support SASL, but you've configured it " \
               "as such! Disconnecting!"
 
             network.disconnect
           end
-
         end
       end
 
@@ -311,7 +326,7 @@ module Blur
       def got_904 network, message
         nick, message = message.parameters
 
-        puts "SASL authentication failed! Disconnecting!"
+        puts 'SASL authentication failed! Disconnecting!'
 
         network.disconnect
       end

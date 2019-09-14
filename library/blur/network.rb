@@ -35,6 +35,8 @@ module Blur
     attr_accessor :connection
     # @return [Network::ISupport] the network isupport specs.
     attr_accessor :isupport
+    # @return [Array<String>] list of capabilities supported by the network.
+    attr_accessor :capabilities
     # @return [Boolean] true if we're waiting for a capability negotiation.
     attr_reader :waiting_for_cap
     # @return [Time] the last time a pong was sent or received.
@@ -110,6 +112,7 @@ module Blur
       @users = {}
       @channels = {}
       @isupport = ISupport.new self
+      @capabilities = []
       @reconnect_interval = 3
       @server_ping_interval_max = @options.fetch('server_ping_interval',
                                                  150).to_i
@@ -191,9 +194,9 @@ module Blur
 
       begin
         @connection = EventMachine.connect host, port, Connection, self
-      rescue EventMachine::ConnectionError => err
-        #@log.warn "Establishing connection to #{self} failed!"
-        #@log.warn err.message
+      rescue EventMachine::ConnectionError => _e
+        # @log.warn "Establishing connection to #{self} failed!"
+        # @log.warn err.message
 
         schedule_reconnect
         return
@@ -206,7 +209,7 @@ module Blur
 
     # Schedules a reconnect after a user-specified number of seconds.
     def schedule_reconnect
-      #@log.info "Reconnecting to #{self} in #{@reconnect_interval} seconds"
+      # @log.info "Reconnecting to #{self} in #{@reconnect_interval} seconds"
 
       EventMachine.add_timer @reconnect_interval do
         connect
@@ -235,7 +238,7 @@ module Blur
           if @last_pong_time == previous_pong_time
             server_connection_timeout
           else
-            #@log.debug 'Received PONG from server in time. Connection is okay.'
+            # @log.debug 'Received PONG from server in time. Connection is okay.'
           end
         end
       end
@@ -243,12 +246,10 @@ module Blur
 
     # Called when the connection was successfully established.
     def connected!
-      if sasl?
-        @waiting_for_cap = true
+      @waiting_for_cap = true
+      @capabilities.clear
 
-        transmit :CAP, 'REQ', 'sasl'
-      end
-
+      transmit :CAP, 'LS'
       transmit :PASS, @options['password'] if @options['password']
       transmit :NICK, @options['nickname']
       transmit :USER, @options['username'], 'void', 'void', @options['realname']
@@ -260,7 +261,7 @@ module Blur
     def abort_cap_neg
       @waiting_for_cap = false
 
-      puts "Server does not support capability negotiation"
+      puts 'Server does not support capability negotiation'
     end
 
     # Called when we're done with capability negotiation.
