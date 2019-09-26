@@ -12,9 +12,6 @@ module Blur
     include Handling
     include Logging
 
-    # Client error.
-    Error = Class.new StandardError
-
     # The default environment.
     ENVIRONMENT = ENV['BLUR_ENV'] || 'development'.freeze
 
@@ -49,7 +46,7 @@ module Blur
       @scripts = {}
       @networks = []
       @config_path = options[:config_path]
-      @environment = options[:environment]
+      @environment = options[:environment] || ENVIRONMENT
       @verbose = options[:verbose] == true
 
       unless @config_path
@@ -219,7 +216,7 @@ module Blur
 
         emit :config_load
       else
-        raise Error, "No configuration found for specified environment `#{@environment}'"
+        raise ClientError, "No configuration found for specified environment `#{@environment}'"
       end
     end
   end

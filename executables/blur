@@ -7,7 +7,6 @@ require 'optparse'
 
 options = {
   verbose: false,
-  environment: 'development',
   config_path: 'config.yml'
 }
 
