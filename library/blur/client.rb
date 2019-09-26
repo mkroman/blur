@@ -79,7 +79,11 @@ module Blur
         networks.each &:connect
 
         EventMachine.error_handler do |exception|
-          log.error "#{exception.message ^ :bold} on line #{exception.line.to_s ^ :bold}"
+          message_pattern = /^.*?:(\d+):/
+          backtrace = exception.backtrace.first
+          error_line = backtrace.match(message_pattern)[1].to_i + 1
+
+          log.error "#{exception.message ^ :bold} on line #{error_line.to_s ^ :bold}"
           puts exception.backtrace.join "\n"
         end
       end

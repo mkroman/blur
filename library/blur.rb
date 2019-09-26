@@ -20,7 +20,6 @@ require 'blur/network'
 require 'blur/client'
 require 'blur/user'
 require 'blur/channel'
-require 'blur/enhancements'
 require 'blur/network/isupport'
 require 'blur/network/connection'
 
