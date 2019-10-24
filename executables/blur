@@ -45,6 +45,7 @@ rescue LoadError => exception
   puts
   puts "Please ensure that you've installed it using the following command:"
   puts 'gem install blur'
+
   raise exception
   exit 1
 end

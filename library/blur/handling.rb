@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 module Blur
   class Client
@@ -29,14 +29,58 @@ module Blur
     #   
     # @see http://www.irchelp.org/irchelp/rfc/chapter6.html
     module Handling
-    
+      HANDLERS = {
+        'PRIVMSG' => :handle_privmsg,
+        'TOPIC' => :handle_topic,
+        'PING' => :handle_ping,
+        'PONG' => :handle_pong,
+        'NICK' => :handle_nick,
+        'JOIN' => :handle_join,
+        'PART' => :handle_part,
+        'QUIT' => :handle_quit,
+        'KICK' => :handle_kick,
+        'MODE' => :handle_mode,
+
+        'CAP' => :handle_cap,
+
+        # SASL ATHENTICATE
+        'AUTHENTICATE' => :handle_sasl_authenticate,
+
+        # RPL_WELCOME (RFC2812)
+        '001' => :handle_welcome,
+
+        # RPL_ISUPPORT
+        '005' => :handle_isupport,
+
+        # RPL_TOPIC (RFC1459)
+        '332' => :handle_channel_topic,
+        # RPL_NAMREPLY (RFC1459)
+        '353' => :handle_name_reply,
+
+        # RPL_LOGGEDIN (IRCv3.1)
+        '900' => :handle_sasl_logged_in,
+        # ERR_SASLFAIL (IRCv3.1)
+        '904' => :handle_sasl_fail,
+        # 901 RPL_LOGGEDOUT
+        # 902 ERR_NICKLOCKED
+        # 903 RPL_SASLSUCCESS
+        # 905 ERR_SASLTOOLONG
+        # 906 ERR_SASLABORTED
+        # 907 ERR_SASLALREADY
+        # 908 RPL_SASLMECHS
+      }
+
       # Called when the MOTD was received, which also means it is ready.
       #
       # == Callbacks:
       # Emits +:connection_ready+ with the parameter +network+.
       #
       # Automatically joins the channels specified in +:channels+.
-      def got_end_of_motd network, message
+      def handle_welcome network, message
+        if network.waiting_for_cap
+          network.abort_cap_neg
+        end
+
         emit :connection_ready, network
         
         network.options['channels'].each do |channel|
@@ -45,7 +89,7 @@ module Blur
       end
       
       # Called when the namelist of a channel was received.
-      def got_name_reply network, message
+      def handle_name_reply network, message
         name  = message.parameters[2] # Channel name.
         nicks = message.parameters[3].split.map do |nick|
           # Slice the nick if the first character is a user mode prefix.
@@ -71,7 +115,7 @@ module Blur
       #
       # == Callbacks:
       # Emits :topic_change with the parameters +channel+ and +topic+.
-      def got_channel_topic network, message
+      def handle_topic network, message
         _, channel_name, topic = message.parameters
         
         if channel = find_or_create_channel(channel_name, network)
@@ -82,7 +126,7 @@ module Blur
       end
       
       # Called when the server needs to verify that we're alive.
-      def got_ping network, message
+      def handle_ping network, message
         network.last_pong_time = Time.now
         network.transmit :PONG, message.parameters[0]
 
@@ -90,7 +134,7 @@ module Blur
       end
 
       # Called when the server reponds to our periodic PINGs.
-      def got_pong network, message
+      def handle_pong network, message
         network.last_pong_time = Time.now
         
         emit :network_pong, network, message.parameters[0]
@@ -100,7 +144,7 @@ module Blur
       #
       # == Callbacks:
       # Emits :user_rename with the parameters +channel+, +user+ and +new_nick+
-      def got_nick network, message
+      def handle_nick network, message
         old_nick = message.prefix.nick
         
         if user = network.users.delete(old_nick)
@@ -120,7 +164,7 @@ module Blur
       # Emits +:private_message+ with the parameters +user+ and +message+.
       #
       # @note Messages are contained as strings.
-      def got_privmsg network, message
+      def handle_privmsg network, message
         return unless message.prefix.nick # Ignore all server privmsgs
         name, msg = message.parameters
 
@@ -148,7 +192,7 @@ module Blur
       #
       # == Callbacks:
       # Emits +:user_entered+ with the parameters +channel+ and +user+.
-      def got_join network, message
+      def handle_join network, message
         channel_name = message.parameters[0]
 
         user = find_or_create_user message.prefix.nick, network
@@ -166,7 +210,7 @@ module Blur
       #
       # == Callbacks:
       # Emits +:user_left+ with the parameters +channel+ and +user+.
-      def got_part network, message
+      def handle_part network, message
         channel_name = message.parameters[0]
         
         if channel = network.channels[channel_name]
@@ -182,7 +226,7 @@ module Blur
       #
       # == Callbacks:
       # Emits +:user_quit+ with the parameters +channel+ and +user+.
-      def got_quit network, message
+      def handle_quit network, message
         nick = message.prefix.nick
         reason = message.parameters[2]
         
@@ -203,7 +247,7 @@ module Blur
       # and +reason+.
       #
       # +kicker+ is the user that kicked +kickee+.
-      def got_kick network, message
+      def handle_kick network, message
         name, target, reason = message.parameters
         
         if channel = network.channels[name]
@@ -221,7 +265,7 @@ module Blur
       #
       # == Callbacks:
       # Emits :topic with the parameters +user+, +channel+ and +topic+.
-      def got_topic network, message
+      def handle_topic network, message
         channel_name, topic = message.parameters
         
         if channel = network.channels[channel_name]
@@ -240,7 +284,7 @@ module Blur
       # Emits +:channel_mode+ with the parameters +channel+ and +modes+.
       # === When it's user modes:
       # Emits +:user_mode+ with the parameters +user+ and +modes+.
-      def got_mode network, message
+      def handle_mode network, message
         name, modes, limit, nick, mask = message.parameters
 
         if channel = network.channels[name]
@@ -249,7 +293,7 @@ module Blur
       end
 
       # Called when the network announces its ISUPPORT parameters.
-      def got_005 network, message
+      def handle_isupport network, message
         params = message.parameters[1..-2]
 
         network.isupport.parse *params
@@ -258,7 +302,7 @@ module Blur
       # Received when the server supports capability negotiation.
       #
       # CAP * LS :multi-prefix sasl
-      def got_cap network, message
+      def handle_cap network, message
         _id, command = message.parameters[0..1]
 
         case command
@@ -296,13 +340,7 @@ module Blur
         end
       end
 
-      def got_001 network, message
-        if network.waiting_for_cap
-          network.abort_cap_neg
-        end
-      end
-
-      def got_authenticate network, message
+      def handle_sasl_authenticate network, message
         case message.parameters[0]
         when '+'
           return unless network.sasl?
@@ -315,7 +353,7 @@ module Blur
 
       # :server 900 <nick> <nick>!<ident>@<host> <account> :You are now logged in as <user>
       # RPL_LOGGEDIN SASL
-      def got_900 network, message
+      def handle_sasl_logged_in network, message
         if network.waiting_for_cap
           network.cap_end
         end
@@ -323,18 +361,13 @@ module Blur
 
       # :server 904 <nick> :SASL authentication failed
       # ERR_SASLFAIL
-      def got_904 network, message
+      def handle_sasl_fail network, message
         nick, message = message.parameters
 
         puts 'SASL authentication failed! Disconnecting!'
 
         network.disconnect
       end
-
-      alias_method :got_353, :got_name_reply
-      alias_method :got_422, :got_end_of_motd
-      alias_method :got_376, :got_end_of_motd
-      alias_method :got_332, :got_channel_topic
 
     private
 

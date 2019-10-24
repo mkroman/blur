@@ -96,10 +96,11 @@ module Blur
       if @verbose
         log "#{'←' ^ :green} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
       end
-      name = :"got_#{message.command.downcase}"
 
-      if respond_to? name
-        __send__ name, network, message
+      method_name = HANDLERS[message.command]
+
+      if method_name
+        __send__ method_name, network, message
       end
     end
     
