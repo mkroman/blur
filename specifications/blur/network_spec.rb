@@ -19,7 +19,31 @@ RSpec.describe Blur::Network do
   end
 
   describe '#got_message' do
-    it 'should pass the message to the client'
+    subject do
+      client = double(:client, verbose: true)
+
+      Blur::Network.new({ 'nickname' => 'test', 'hostname' => 'irc.test.org' }, client)
+    end
+
+    let(:network) { double :network }
+    let(:message) { IRCParser::Message.parse 'PRIVMSG #channel message' }
+
+    context 'when the command is valid' do
+      it "should call the handler method" do
+        expect(subject).to receive(:handle_privmsg).with(message)
+        subject.got_message message
+      end
+    end
+
+    context 'when verbose logging is enabled' do
+      let(:message) { IRCParser::Message.parse 'MILK abc' }
+
+      it 'should log the raw message' do
+        expect do
+          subject.got_message message
+        end.to output(/MILK\s+"abc"/).to_stdout
+      end
+    end
   end
 
   describe '#channels_by_name' do

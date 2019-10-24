@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-require 'blur/handling'
-
 module Blur
   # The +Client+ class is the controller of the low-level access.
   #
@@ -9,7 +7,6 @@ module Blur
   # distributing the incoming commands to the right networks and scripts.
   class Client
     include Callbacks
-    include Handling
     include Logging
 
     # The default environment.
@@ -83,24 +80,6 @@ module Blur
           log.error "#{exception.message ^ :bold} on line #{error_line.to_s ^ :bold}"
           puts exception.backtrace.join "\n"
         end
-      end
-    end
-    
-    # Is called when a command have been received and parsed, this distributes
-    # the command to the loader, which then further distributes it to events
-    # and scripts.
-    #
-    # @param [Network] network the network that received the command.
-    # @param [Network::Command] command the received command.
-    def got_message network, message
-      if @verbose
-        log "#{'←' ^ :green} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
-      end
-
-      method_name = HANDLERS[message.command]
-
-      if method_name
-        __send__ method_name, network, message
       end
     end
     

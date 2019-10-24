@@ -78,30 +78,6 @@ describe Blur::Client do
     end
   end
 
-  describe '#got_message' do
-    let(:network) { double :network }
-    let(:message) { IRCParser::Message.parse 'PRIVMSG #channel message' }
-
-    context 'when the command is valid' do
-      it "should call the handler method" do
-        expect(subject).to receive(:handle_privmsg).with(network, message)
-        subject.got_message network, message
-      end
-    end
-
-    context 'when verbose logging is enabled' do
-      let(:message) { IRCParser::Message.parse 'MILK abc' }
-
-      it 'should log the raw message' do
-        subject.verbose = true
-
-        expect do
-          subject.got_message network, message
-        end.to output(/MILK\s+"abc"/).to_stdout
-      end
-    end
-  end
-
   describe '#network_connection_closed' do
     let(:network) { double :network }
 

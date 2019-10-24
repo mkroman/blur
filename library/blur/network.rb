@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+#
+require 'blur/handling'
 
 module Blur
   # The +Network+ module is to be percieved as an IRC network.
@@ -7,6 +9,7 @@ module Blur
   # for network-related structures, such as {User}, {Channel} and {Command}.
   class Network
     include Logging
+    include Handling
 
     # +ConnectionError+ should only be triggered from within {Connection}.
     class ConnectionError < StandardError; end
@@ -116,6 +119,7 @@ module Blur
       @reconnect_interval = 3
       @server_ping_interval_max = @options.fetch('server_ping_interval',
                                                  150).to_i
+      @id = options.fetch 'id', "#{host}:#{port}"
 
       unless options['nickname']
         raise ArgumentError, 'Network configuration for ' \
@@ -125,7 +129,6 @@ module Blur
       @options['username'] ||= @options['nickname']
       @options['realname'] ||= @options['username']
       @options['channels'] ||= []
-      @id = options.fetch 'id', "#{host}:#{port}"
     end
 
     # Send a message to a recipient.
@@ -136,11 +139,22 @@ module Blur
       transmit :PRIVMSG, recipient.to_s, message
     end
 
-    # Forwards the received message to the client instance.
+    # Is called when a command have been received and parsed, this distributes
+    # the command to the loader, which then further distributes it to events
+    # and scripts.
     #
-    # Called when the network connection has enough data to form a command.
+    # @param [Network] network the network that received the command.
+    # @param [Network::Command] command the received command.
     def got_message message
-      @client.got_message self, message
+      if @client.verbose
+        log "#{'←' ^ :green} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
+      end
+
+      method_name = HANDLERS[message.command]
+
+      if method_name
+        __send__ method_name, message
+      end
     rescue StandardError => exception
       puts "#{exception.class}: #{exception.message}"
       puts
@@ -305,6 +319,11 @@ module Blur
       end
 
       @connection.send_data "#{message}\r\n"
+    end
+
+    # Emits an event to the client.
+    def emit name, *args
+      @client.emit name, self, *args
     end
 
     # Send a private message.
