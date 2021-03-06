@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 require 'yaml'
 require 'socket'
@@ -11,30 +11,30 @@ require 'eventmachine'
 require 'ircparser'
 
 # Require all library files.
-require 'blur/logging'
-require 'blur/version'
-require 'blur/callbacks'
-require 'blur/script'
-require 'blur/script_cache'
-require 'blur/network'
-require 'blur/client'
-require 'blur/user'
-require 'blur/channel'
-require 'blur/network/isupport'
-require 'blur/network/connection'
+require_relative './blur/version'
+require_relative './blur/callbacks'
+require_relative './blur/script'
+require_relative './blur/script_cache'
+require_relative './blur/network'
+require_relative './blur/client'
+require_relative './blur/user'
+require_relative './blur/channel'
+require_relative './blur/network/isupport'
+require_relative './blur/network/connection'
 
 # Blur is a very modular IRC-framework for ruby.
 #
 # It allows the developer to extend it in multiple ways.
 # It can be by handlers, scripts, communications, and what have you.
 module Blur
-
   # Client error.
   class ClientError < StandardError; end
+
+  # Configuration file error.
   class ConfigError < StandardError; end
 
   # Creates a new superscript class and inserts it into the list of scripts.
-  def self.Script name, *args, &block
+  def self.Script name, *_args, &block
     klass = Class.new SuperScript
     klass.name = name
     klass.events = {}

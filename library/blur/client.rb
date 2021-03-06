@@ -1,6 +1,6 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
-require 'blur/handling'
+require_relative './handling'
 
 module Blur
   # The +Client+ class is the controller of the low-level access.
@@ -10,10 +10,9 @@ module Blur
   class Client
     include Callbacks
     include Handling
-    include Logging
 
     # The default environment.
-    ENVIRONMENT = ENV['BLUR_ENV'] || 'development'.freeze
+    ENVIRONMENT = ENV['BLUR_ENV'] || 'development'
 
     # The default configuration.
     DEFAULT_CONFIG = {
@@ -22,9 +21,9 @@ module Blur
         'scripts_dir' => 'scripts/',
         'networks' => []
       },
-      'scripts' => {},
+      'scripts' => {}
     }.freeze
-    
+
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
     # @return [Hash] client configuration.
@@ -49,9 +48,7 @@ module Blur
       @environment = options[:environment] || ENVIRONMENT
       @verbose = options[:verbose] == true
 
-      unless @config_path
-        raise ConfigError, 'missing config file path in :config_path option'
-      end
+      raise ConfigError, 'missing config file path in :config_path option' unless @config_path
 
       load_config!
 
@@ -65,12 +62,12 @@ module Blur
 
       trap 2, &method(:quit)
     end
-    
+
     # Connect to each network available that is not already connected, then
     # proceed to start the run-loop.
     def connect
       networks = @networks.reject &:connected?
-      
+
       EventMachine.run do
         load_scripts!
         networks.each &:connect
@@ -85,7 +82,7 @@ module Blur
         end
       end
     end
-    
+
     # Is called when a command have been received and parsed, this distributes
     # the command to the loader, which then further distributes it to events
     # and scripts.
@@ -93,26 +90,23 @@ module Blur
     # @param [Network] network the network that received the command.
     # @param [Network::Command] command the received command.
     def got_message network, message
-      if @verbose
-        log "#{'←' ^ :green} #{message.command.to_s.ljust(8, ' ') ^ :light_gray} #{message.parameters.map(&:inspect).join ' '}"
-      end
+      puts "← #{message.command.to_s.ljust(8, ' ')} #{message.parameters.map(&:inspect).join ' '}" if @verbose
+
       name = :"got_#{message.command.downcase}"
 
-      if respond_to? name
-        __send__ name, network, message
-      end
+      __send__ name, network, message if respond_to? name
     end
-    
+
     # Called when a network connection is either closed, or terminated.
     def network_connection_closed network
       emit :connection_close, network
     end
-    
+
     # Try to gracefully disconnect from each network, unload all scripts and
     # exit properly.
     #
     # @param [optional, Symbol] signal The signal received by the system, if any.
-    def quit signal = :SIGINT
+    def quit _signal = :SIGINT
       @networks.each do |network|
         network.transmit :QUIT, 'Got SIGINT?'
         network.disconnect
@@ -162,11 +156,11 @@ module Blur
     # @raise [Exception] if there was any problems loading the file
     def load_script_file file_path
       load file_path, true
-    rescue Exception => exception
+    rescue Exception => e
       warn "The script `#{file_path}' failed to load"
-      warn "#{exception.class}: #{exception.message}"
+      warn "#{e.class}: #{e.message}"
       warn ''
-      warn 'Backtrace:', '---', exception.backtrace
+      warn 'Backtrace:', '---', e.backtrace
     end
 
     # Instantiates each +SuperScript+ in the +Blur.scripts+ list by manually
@@ -195,7 +189,7 @@ module Blur
     # This method will call #unloaded on the instance of each loaded script to
     # give it a chance to clean up any resources.
     def unload_scripts!
-      @scripts.each do |name, script|
+      @scripts.each do |_name, script|
         script.__send__ :unloaded if script.respond_to? :unloaded
       end.clear
 
@@ -210,14 +204,14 @@ module Blur
     def load_config!
       config = YAML.load_file @config_path
 
-      if config.key? @environment
-        @config = config[@environment]
-        @config.deeper_merge! DEFAULT_CONFIG
-
-        emit :config_load
-      else
+      unless config.key? @environment
         raise ClientError, "No configuration found for specified environment `#{@environment}'"
       end
+
+      @config = config[@environment]
+      @config.deeper_merge! DEFAULT_CONFIG
+
+      emit :config_load
     end
   end
 end

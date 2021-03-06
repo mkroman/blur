@@ -6,8 +6,6 @@ module Blur
   # Although the connection is a part of the network module, it is mainly used
   # for network-related structures, such as {User}, {Channel} and {Command}.
   class Network
-    include Logging
-
     # +ConnectionError+ should only be triggered from within {Connection}.
     class ConnectionError < StandardError; end
 
@@ -108,7 +106,7 @@ module Blur
     def initialize options, client = nil
       @client = client
       @options = options
-      #@log = ::Logging.logger[self]
+      # @log = ::Logging.logger[self]
       @users = {}
       @channels = {}
       @isupport = ISupport.new self
@@ -141,11 +139,11 @@ module Blur
     # Called when the network connection has enough data to form a command.
     def got_message message
       @client.got_message self, message
-    rescue StandardError => exception
-      puts "#{exception.class}: #{exception.message}"
+    rescue StandardError => e
+      puts "#{e.class}: #{e.message}"
       puts
       puts '---'
-      puts exception.backtrace
+      puts e.backtrace
     end
 
     # Find a channel by its name.
@@ -190,13 +188,13 @@ module Blur
     #
     # @see Connection
     def connect
-      #@log.info "Connecting to #{self}"
+      # @log.info "Connecting to #{self}"
 
       begin
         @connection = EventMachine.connect host, port, Connection, self
-      rescue EventMachine::ConnectionError => _e
-        # @log.warn "Establishing connection to #{self} failed!"
-        # @log.warn err.message
+      rescue EventMachine::ConnectionError => e
+        warn "Establishing connection to #{self} failed!"
+        warn e.message
 
         schedule_reconnect
         return
@@ -219,30 +217,26 @@ module Blur
     def server_connection_timeout
       @connection.close_connection
 
-      # @log.warn "Connection to #{self} timed out"
+      warn "Connection to #{self} timed out"
     end
 
     def periodic_ping_check
       now = Time.now
       seconds_since_pong = now - @last_pong_time
 
-      if seconds_since_pong >= @server_ping_interval_max
-        # @log.info "No PING request from the server in #{seconds_since_pong}s!"
+      return unless seconds_since_pong >= @server_ping_interval_max
 
-        transmit 'PING', now.to_s
+      # @log.info "No PING request from the server in #{seconds_since_pong}s!"
 
-        # Wait 15 seconds and declare a timeout if we didn't get a PONG.
-        previous_pong_time = @last_pong_time.dup
+      transmit 'PING', now.to_s
 
-        EventMachine.add_timer 15 do
-          if @last_pong_time == previous_pong_time
-            server_connection_timeout
-          else
-            # @log.debug 'Received PONG from server in time. Connection is okay.'
-          end
-        end
+      # Wait 15 seconds and declare a timeout if we didn't get a PONG.
+      previous_pong_time = @last_pong_time.dup
+
+      EventMachine.add_timer 15 do
+        server_connection_timeout if @last_pong_time == previous_pong_time
       end
-    end 
+    end
 
     # Called when the connection was successfully established.
     def connected!
@@ -278,12 +272,12 @@ module Blur
       @users.clear
       @ping_timer.cancel
 
-      #@log.debug "Connection to #{self} lost!"
+      # @log.debug "Connection to #{self} lost!"
       @client.network_connection_closed self
 
-      if @options.fetch('reconnect', DEFAULT_RECONNECT)
-        schedule_reconnect
-      end
+      return unless @options.fetch('reconnect', DEFAULT_RECONNECT)
+
+      schedule_reconnect
     end
 
     # Terminate the connection and clear all channels and users.
@@ -301,7 +295,7 @@ module Blur
       if @client.verbose
         formatted_command = message.command.to_s.ljust 8, ' '
         formatted_params = message.parameters.map(&:inspect).join ' '
-        log "#{'→' ^ :red} #{formatted_command} #{formatted_params}"
+        puts "→ #{formatted_command} #{formatted_params}"
       end
 
       @connection.send_data "#{message}\r\n"

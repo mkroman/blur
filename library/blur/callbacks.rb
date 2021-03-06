@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 module Blur
   module Callbacks
@@ -37,20 +37,18 @@ module Blur
     protected
 
     def notify_scripts name, *args
-      scripts = @scripts.values.select{|script| script.class.events.key? name }
+      scripts = @scripts.values.select { |script| script.class.events.key? name }
       scripts.each do |script|
-        begin
-          script.class.events[name].each do |method|
-            if method.is_a? Proc
-              method.call script, *args
-            else
-              script.__send__ method, *args
-            end
+        script.class.events[name].each do |method|
+          if method.is_a? Proc
+            method.call script, *args
+          else
+            script.__send__ method, *args
           end
-        rescue => exception
-          STDERR.puts "#{exception.class}: #{exception.message}"
-          STDERR.puts nil, 'Backtrace:', '---', exception.backtrace
         end
+      rescue StandardError => e
+        warn "#{e.class}: #{e.message}"
+        warn nil, 'Backtrace:', '---', e.backtrace
       end
     end
   end

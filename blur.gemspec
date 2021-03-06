@@ -1,18 +1,18 @@
 #!/usr/bin/gem build
-# encoding: utf-8
+# frozen_string_literal: true
 
-require File.dirname(__FILE__) + '/library/blur/version'
+require_relative './library/blur/version'
 
 Gem::Specification.new do |spec|
-  spec.name     = "blur"
-  spec.version  = Blur::Version
-  spec.summary  = "An event-driven IRC-framework for Ruby."
+  spec.name     = 'blur'
+  spec.version  = Blur.version
+  spec.summary  = 'An event-driven IRC-framework for Ruby.'
 
-  spec.homepage = "https://github.com/mkroman/blur"
-  spec.license  = "MIT"
-  spec.author   = "Mikkel Kroman"
-  spec.email    = "mk@uplink.io"
-  spec.files    = Dir["library/**/*.rb", "README.md", "LICENSE", ".yardopts"]
+  spec.homepage = 'https://github.com/mkroman/blur'
+  spec.license  = 'MIT'
+  spec.author   = 'Mikkel Kroman'
+  spec.email    = 'mk@uplink.io'
+  spec.files    = Dir['library/**/*.rb', 'README.md', 'LICENSE', '.yardopts']
 
   spec.add_runtime_dependency 'deep_merge', '~> 1.2'
   spec.add_runtime_dependency 'eventmachine', '~> 1.2'
@@ -21,8 +21,8 @@ Gem::Specification.new do |spec|
   spec.bindir = 'executables'
   spec.executables << 'blur'
 
-  spec.require_path = "library"
-  spec.required_ruby_version = ">= 1.9.1"
+  spec.require_path = 'library'
+  spec.required_ruby_version = '>= 2.7'
 end
 
 # vim: set syntax=ruby:

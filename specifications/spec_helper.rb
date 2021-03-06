@@ -1,7 +1,6 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
-$:.unshift File.dirname(__FILE__) + '/../library'
-require 'blur'
+require_relative '../library/blur'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |c|

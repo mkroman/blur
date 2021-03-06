@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 require_relative './spec_helper'
 
 describe Blur do
   describe '.Script' do
-    before(:each) { Blur::reset_scripts! }
+    before(:each) { Blur.reset_scripts! }
 
     it 'should init a class derived from a superscript' do
       expect(Blur::SuperScript).to receive(:inherited)

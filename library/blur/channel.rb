@@ -1,11 +1,11 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 module Blur
   # The +Channel+ class is used for encapsulating a channel and its properties.
   #
   # Users inside the channel is stored in the {#channels} attribute.
   #
-  # Modes can be set for a channel, but Blur is not 
+  # Modes can be set for a channel, but Blur is not
   # {http://www.irc.org/tech_docs/005.html ISupport}-compliant yet.
   #
   # @todo make so that channels *and* users belongs to the network, and not
@@ -26,8 +26,8 @@ module Blur
     # Instantiate a user with a nickname, a network and a user list.
     def initialize name, network = nil
       @name    = name
-      @users = []
-      @modes   = String.new
+      @users   = []
+      @modes   = ''
       @network = network
     end
 
@@ -39,9 +39,9 @@ module Blur
 
       modes.each_char do |char|
         case char
-        when ?+
+        when '+'
           addition = true
-        when ?-
+        when '-'
           addition = false
         else
           addition ? @modes.concat(char) : @modes.delete!(char)
@@ -58,9 +58,12 @@ module Blur
 
     # Convert it to a debug-friendly format.
     def inspect
-      %{#<#{self.class.name}:0x#{self.object_id.to_s 16} @name=#{@name.inspect} @topic=#{@topic.inspect} @users=#{@users.inspect}}
+      "#<#{self.class.name}:0x#{object_id.to_s 16} " \
+        "@name=#{@name.inspect} " \
+        "@topic=#{@topic.inspect} " \
+        "@users=#{@users.inspect}>"
     end
-    
+
     # Called when YAML attempts to save the object, which happens when a
     # scripts cache contains this user and the script is unloaded.
     def to_yaml options = {}

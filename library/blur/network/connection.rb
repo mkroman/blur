@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 module Blur
   class Network
@@ -69,12 +69,8 @@ module Blur
         ssl_cert_file    = @network.options[:ssl_cert_file]
         peer_certificate = OpenSSL::X509::Certificate.new peer_cert
 
-        if ssl_cert_file
-          unless File.readable? ssl_cert_file
-            raise SSLValidationError, "Could not read the CA certificate file."
-
-            return false
-          end
+        if ssl_cert_file && !File.readable?(ssl_cert_file)
+          raise SSLValidationError, 'Could not read the CA certificate file.'
         end
 
         if fingerprint_verification?
@@ -83,9 +79,7 @@ module Blur
 
           if fingerprint != peer_fingerprint
             raise SSLValidationError,
-              "Expected fingerprint '#{fingerprint}', but got '#{peer_fingerprint}'"
-
-            return false
+                  "Expected fingerprint '#{fingerprint}', but got '#{peer_fingerprint}'"
           end
         end
 
@@ -93,11 +87,7 @@ module Blur
           ca_certificate = OpenSSL::X509::Certificate.new File.read ssl_cert_file
           valid_signature = peer_certificate.verify ca_certificate.public_key
 
-          if not valid_signature
-            raise SSLValidationError, "Certificate verify failed"
-
-            return false
-          end
+          raise SSLValidationError, 'Certificate verify failed' unless valid_signature
         end
 
         true
@@ -106,9 +96,7 @@ module Blur
       # Called once the connection is finally established.
       def connection_completed
         # We aren't completely connected yet if the connection is encrypted.
-        unless @network.secure?
-          connected!
-        end
+        connected! unless @network.secure?
       end
 
       # Called just as the connection is being terminated, either by remote or
@@ -120,7 +108,8 @@ module Blur
         super
       end
 
-    private
+      private
+
       # Called when connection has been established.
       def connected!
         @connected = true
@@ -130,12 +119,12 @@ module Blur
 
       # Returns true if we're expected to verify the certificate fingerprint.
       def fingerprint_verification?
-        not @network.options[:ssl_fingerprint].nil?
+        !@network.options[:ssl_fingerprint].nil?
       end
 
       # Returns true if we should verify the peer certificate.
       def certificate_verification?
-        not @network.options[:ssl_cert_file].nil?
+        !@network.options[:ssl_cert_file].nil?
       end
 
       # Get the hexadecimal representation of the certificates public key.
@@ -151,9 +140,8 @@ module Blur
         fingerprint = @network.options[:ssl_fingerprint]
 
         raise SSLValidationError,
-          "Expected fingerprint '#{fingerprint}' but got '#{peer_fingerprint}'"
+              "Expected fingerprint '#{fingerprint}' but got '#{peer_fingerprint}'"
       end
-
     end
   end
 end

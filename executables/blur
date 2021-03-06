@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
+# frozen_string_literal: true
 
-$:.unshift File.join __dir__, '../library'
+require_relative '../library/blur'
 
 require 'optparse'
 
@@ -11,10 +11,10 @@ options = {
 }
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: #$0 [-c <config>] [-e <env>]"
+  opts.banner = "Usage: #{$PROGRAM_NAME} [-c <config>] [-e <env>]"
 
-  opts.separator ""
-  opts.separator "Specific options:"
+  opts.separator ''
+  opts.separator 'Specific options:'
 
   opts.on '-v', '--[no-]verbose', 'Enable verbose logging' do |verbose|
     options[:verbose] = verbose
@@ -40,20 +40,17 @@ end.parse!
 
 begin
   require 'blur'
-rescue LoadError => exception
+rescue LoadError => e
   puts 'Ruby was unable to load the blur library!'
   puts
   puts "Please ensure that you've installed it using the following command:"
   puts 'gem install blur'
-  raise exception
-  exit 1
+  raise e
 end
 
 config_path = File.expand_path options[:config_path]
-unless File.readable? config_path
-  fail "Configuration file `#{config_path}' is not readable"
-  exit 1
-end
+
+raise "Configuration file `#{config_path}' is not readable" unless File.readable? config_path
 
 @client = Blur::Client.new options
 @client.connect

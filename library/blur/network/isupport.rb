@@ -1,20 +1,22 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
+require 'English'
 
 module Blur
   class Network
     # ISupport class that enables servers to announce what they support.
-    # 
+    #
     # @see https://tools.ietf.org/html/draft-brocklesby-irc-isupport-03
     class ISupport < Hash
       # Return the network reference.
       attr_accessor :network
 
       # ISUPPORT parameters which should always be casted to numeric values.
-      NumericParams = %w[CHANNELLEN MODES NICKLEN KICKLEN TOPICLEN AWAYLEN
-        MAXCHANNELS MAXBANS MAXPARA MAXTARGETS].freeze
+      NUMERIC_PARAMS = %w[CHANNELLEN MODES NICKLEN KICKLEN TOPICLEN AWAYLEN
+                          MAXCHANNELS MAXBANS MAXPARA MAXTARGETS].freeze
 
       # Our parsers for parameters that require special treatment.
-      Parsers = {
+      PARSERS = {
         # CHANLIMIT=pfx:num[,pfx:num,...]
         #
         # This parameter specifies the maximum number of channels that a client
@@ -24,10 +26,10 @@ module Blur
         # the client may join in total. If there is no limit to the number of
         # certain channel type(s) a client may join, the limit should be
         # specified as the empty string, for example "#:".
-        %w[CHANLIMIT] => -> (value) do
-          Hash.new.tap do |result|
-            params = value.split ?,
-            mappings = params.map{|param| param.split ?: }
+        %w[CHANLIMIT] => lambda do |value|
+          {}.tap do |result|
+            params = value.split ','
+            mappings = params.map { |param| param.split ':' }
 
             mappings.each do |prefixes, limit|
               prefixes.each_char do |prefix|
@@ -48,10 +50,12 @@ module Blur
         #
         # The order of the modes is from that which gives most privileges on
         #  the channel, to that which gives the least.
-        %w[PREFIX] => -> (value) do
-          Hash.new.tap do |result|
-            if value =~ /^\((.+)\)(.*)/
-              modes, prefix = $~[1..2]
+        %w[PREFIX] => lambda do |value|
+          {}.tap do |result|
+            match = value.match(/^\((.+)\)(.*)/)
+
+            if match
+              modes, prefix = match[1..2]
 
               modes.chars.each_with_index do |char, index|
                 result[char] = prefix[index]
@@ -77,39 +81,41 @@ module Blur
         #    mode is removed both in the client's and server's MODE command.
         # o  Type D: Modes that change a setting on the channel. These modes
         #    never take a parameter.
-        %w[CHANMODES] => -> (value) do
-          Hash.new.tap do |r|
-            r["A"], r["B"], r["C"], r["D"] = value.split(?,).map &:chars
+        %w[CHANMODES] => lambda do |value|
+          {}.tap do |r|
+            r['A'], r['B'], r['C'], r['D'] = value.split(',').map &:chars
           end
         end,
 
         # Cast known params that are numeric, to a numeric value.
-        NumericParams => -> (value) do
+        NUMERIC_PARAMS => lambda do |value|
           value.to_i
         end
-      }
+      }.freeze
 
       # Initialize a new ISupport with a network reference.
-      # 
+      #
       # @param network [Network] The parent network.
       def initialize network
+        super
+
         @network = network
 
         # Set default ISUPPORT values.
         #
         # @see
         # https://tools.ietf.org/html/draft-brocklesby-irc-isupport-03#appendix-A
-        self["MODES"]       = 3
-        self["PREFIX"]      = { "o" => "@", "v" => "+" }
-        self["KICKLEN"]     = 200
-        self["NICKLEN"]     = 9
-        self["MAXLIST"]     = { "#" => Float::INFINITY, "&" => Float::INFINITY }
+        self['MODES']       = 3
+        self['PREFIX']      = { 'o' => '@', 'v' => '+' }
+        self['KICKLEN']     = 200
+        self['NICKLEN']     = 9
+        self['MAXLIST']     = { '#' => Float::INFINITY, '&' => Float::INFINITY }
         self['TOPICLEN']    = 200
-        self["CHANMODES"]   = {}
-        self["CHANTYPES"]   = %w{# &}
-        self["CHANLIMIT"]   = { "#" => Float::INFINITY, "&" => Float::INFINITY }
-        self["CHANNELLEN"]  = 200
-        self["CASEMAPPING"] = "rfc1459"
+        self['CHANMODES']   = {}
+        self['CHANTYPES']   = %w[# &]
+        self['CHANLIMIT']   = { '#' => Float::INFINITY, '&' => Float::INFINITY }
+        self['CHANNELLEN']  = 200
+        self['CASEMAPPING'] = 'rfc1459'
       end
 
       # Parse a list of parameters to see what the server supports.
@@ -117,12 +123,12 @@ module Blur
       # @param parameters [Array] The list of parameters.
       def parse *params
         params.each do |parameter|
-          name, value = parameter.split ?=
+          name, value = parameter.split '='
 
           if value
-            _, parser = Parsers.find{|key, value| key.include? name }
+            _, parser = PARSERS.find { |key, _value| key.include? name }
 
-            self[name] = parser.nil? ? value : parser.(value)
+            self[name] = parser.nil? ? value : parser.call(value)
           else
             self[name] = true
           end

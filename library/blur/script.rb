@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 module Blur
   module Commands
@@ -27,7 +27,7 @@ module Blur
       #   command! '!ping' do |user, channel, args|
       #     channel.say "#{user}: pong"
       #   end
-      def command! command, *args, &block
+      def command! command, *_args, &block
         id = (command_lut << command)
         define_method :"_command_#{id}", &block
       end
@@ -40,11 +40,11 @@ module Blur
 
       klass.extend ClassMethods
       klass.command_lut = CommandLUT.new
-      klass.register! message: -> (script, user, channel, line) {
+      klass.register! message: lambda { |script, user, channel, line|
         command, args = line.split ' ', 2
         return unless command
 
-        if id = klass.command_lut.commands[command.downcase]
+        if (id = klass.command_lut.commands[command.downcase])
           script.__send__ :"_command_#{id}", user, channel, args
         end
       }
@@ -56,7 +56,7 @@ module Blur
       attr_accessor :name, :authors, :version, :description, :events
 
       # Sets the author.
-      # 
+      #
       # @example
       #   Author 'John Doe <john.doe@example.com>'
       def Author *authors
@@ -104,11 +104,16 @@ module Blur
         (@events[name] ||= []) << method_name
       end
 
-      def to_s; inspect end
-      def inspect; %%#<SuperScript:0x#{self.object_id.to_s 16}>% end
+      def to_s
+        inspect
+      end
 
-      alias :author :authors
-      alias :Authors :Author
+      def inspect
+        %(#<SuperScript:0x#{object_id.to_s 16}>)
+      end
+
+      alias author authors
+      alias Authors Author
     end
 
     # Called when when the superscript has been loaded and added to the list of
@@ -122,7 +127,7 @@ module Blur
     # Reference to the main client that holds the script.
     attr_accessor :_client_ref
 
-    # Script-specific configuration that is read from the main configuration 
+    # Script-specific configuration that is read from the main configuration
     # file.
     attr_accessor :config
 
@@ -132,7 +137,9 @@ module Blur
     def unloaded; end
 
     # Gets the instantiated script with +name+.
-    def script name; _client_ref.scripts[name] end
+    def script name
+      _client_ref.scripts[name]
+    end
 
     # Gets a human-readable representation of the script.
     def inspect
@@ -142,6 +149,8 @@ module Blur
         "@description=#{self.class.description.inspect}>"
     end
 
-    def to_s; inspect end
+    def to_s
+      inspect
+    end
   end
 end
