@@ -77,7 +77,7 @@ module Blur
           backtrace = exception.backtrace.first
           error_line = backtrace.match(message_pattern)[1].to_i + 1
 
-          puts "#{exception.message ^ :bold} on line #{error_line.to_s ^ :bold}"
+          puts "#{exception.message} on line #{error_line.to_s}"
           puts exception.backtrace.join "\n"
         end
       end
