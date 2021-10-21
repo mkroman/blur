@@ -4,7 +4,7 @@ source 'https://rubygems.org'
 
 # Project dependencies.
 gem 'deep_merge', '~> 1.2'
-gem 'eventmachine', '~> 1.2'
+gem 'eventmachine', '~> 1.2', git: 'https://github.com/eventmachine/eventmachine.git'
 gem 'ircparser', '~> 1.0'
 
 # Testing dependencies.
