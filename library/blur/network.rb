@@ -21,6 +21,8 @@ module Blur
     #
     # @return [String] the unique identifier for this network.
     attr_reader :id
+    # @return [String] the current nickname.
+    attr_accessor :nickname
     # @return [Hash] the network options.
     attr_accessor :options
     # @return [Hash] the map of users that is known.
@@ -120,6 +122,7 @@ module Blur
           "`#{id}' is missing a nickname"
       end
 
+      @nickname = options['nickname']
       @options['username'] ||= @options['nickname']
       @options['realname'] ||= @options['username']
       @options['channels'] ||= []

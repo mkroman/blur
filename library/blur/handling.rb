@@ -100,6 +100,14 @@ module Blur
       def got_nick network, message
         old_nick = message.prefix.nick
 
+        # Update or own nickname if has been changed by the server
+        if network.nickname == old_nick
+          new_nick = message.parameters[0]
+
+          emit :nick, new_nick
+          network.nickname = new_nick
+        end
+
         return unless (user = network.users.delete(old_nick))
 
         new_nick = message.parameters[0]
@@ -286,8 +294,12 @@ module Blur
         end
       end
 
-      def got_001 network, _message
+      def got_001 network, message
         network.abort_cap_neg if network.waiting_for_cap
+
+        # Get our nickname from the server
+        nickname = message.parameters[0]
+        network.nickname = nickname
       end
 
       def got_authenticate network, message
