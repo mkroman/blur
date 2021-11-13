@@ -318,10 +318,16 @@ module Blur
         network.disconnect
       end
 
+      def got_nickname_in_use network, message
+        nickname = network.options['nickname']
+        network.transmit :NICK, "#{nickname}_"
+      end
+
       alias got_353 got_name_reply
       alias got_422 got_end_of_motd
       alias got_376 got_end_of_motd
       alias got_332 got_channel_topic
+      alias got_433 got_nickname_in_use
 
       private
 
