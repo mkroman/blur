@@ -16,14 +16,12 @@ module Blur
     # @return [true, false] True if any callbacks were invoked, nil otherwise
     def emit name, *args
       # Trigger callbacks in scripts before triggering events in the client.
-      EM.defer { notify_scripts name, *args }
+      notify_scripts name, *args
 
       matching_callbacks = callbacks[name]
       return false unless matching_callbacks&.any?
 
-      EM.defer do
-        matching_callbacks.each { |callback| callback.call *args }
-      end
+      matching_callbacks.each { |callback| callback.call *args }
     end
 
     # Add a new event callback.

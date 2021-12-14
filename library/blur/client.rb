@@ -68,18 +68,16 @@ module Blur
     def connect
       networks = @networks.reject &:connected?
 
-      EventMachine.run do
-        load_scripts!
-        networks.each &:connect
+      load_scripts!
+      networks.each &:connect
 
-        EventMachine.error_handler do |exception|
-          message_pattern = /^.*?:(\d+):/
-          backtrace = exception.backtrace.first
-          error_line = backtrace.match(message_pattern)[1].to_i + 1
+      EventMachine.error_handler do |exception|
+        message_pattern = /^.*?:(\d+):/
+        backtrace = exception.backtrace.first
+        error_line = backtrace.match(message_pattern)[1].to_i + 1
 
-          puts "#{exception.message} on line #{error_line.to_s}"
-          puts exception.backtrace.join "\n"
-        end
+        puts "#{exception.message} on line #{error_line.to_s}"
+        puts exception.backtrace.join "\n"
       end
     end
 

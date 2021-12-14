@@ -55,7 +55,9 @@ puts "Loading configuration file `#{config_path}' .."
 
 raise "Configuration file `#{config_path}' is not readable" unless File.readable? config_path
 
-@client = Blur::Client.new options
-@client.connect
+EM.run do
+  @client = Blur::Client.new options
+  @client.connect
+end
 
 # vim: syntax=ruby
