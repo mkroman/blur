@@ -129,6 +129,7 @@ module Blur
         return unless message.prefix.nick # Ignore all server privmsgs
 
         name, msg = message.parameters
+        tags = message.tags
 
         if (channel = network.channels[name])
           unless (user = network.users[message.prefix.nick])
@@ -138,7 +139,7 @@ module Blur
           user.name = message.prefix.user
           user.host = message.prefix.host
 
-          emit :message, user, channel, msg
+          emit :message, user, channel, msg, tags
         else # This is a private message
           unless (user = network.users[message.prefix.nick])
             user = User.new message.prefix.nick, network
@@ -146,7 +147,7 @@ module Blur
             user.host = message.prefix.host
           end
 
-          emit :private_message, user, msg
+          emit :private_message, user, msg, tags
         end
       end
 
@@ -269,6 +270,7 @@ module Blur
 
           req << 'sasl' if network.sasl? && capabilities.include?('sasl')
           req << 'account-tag' if capabilities.include?('account-tag')
+          req << 'account-notify' if capabilities.include?('account-notify')
 
           network.transmit :CAP, 'REQ', req.join(' ') if req.any?
 

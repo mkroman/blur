@@ -40,12 +40,12 @@ module Blur
 
       klass.extend ClassMethods
       klass.command_lut = CommandLUT.new
-      klass.register! message: lambda { |script, user, channel, line|
+      klass.register! message: lambda { |script, user, channel, line, tags|
         command, args = line.split ' ', 2
         return unless command
 
         if (id = klass.command_lut.commands[command.downcase])
-          script.__send__ :"_command_#{id}", user, channel, args
+          script.__send__ :"_command_#{id}", user, channel, args, tags
         end
       }
     end
