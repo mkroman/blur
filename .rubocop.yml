@@ -3,4 +3,5 @@ Lint/AmbiguousOperator:
 Style/MethodDefParentheses:
   Enabled: false
 AllCops:
+  NewCops: enable
   TargetRubyVersion: 3.3

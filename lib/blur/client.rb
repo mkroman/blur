@@ -71,14 +71,14 @@ module Blur
       load_scripts!
       networks.each &:connect
 
-      EventMachine.error_handler do |exception|
-        message_pattern = /^.*?:(\d+):/
-        backtrace = exception.backtrace.first
-        error_line = backtrace.match(message_pattern)[1].to_i + 1
+      # EventMachine.error_handler do |exception|
+      #   message_pattern = /^.*?:(\d+):/
+      #   backtrace = exception.backtrace.first
+      #   error_line = backtrace.match(message_pattern)[1].to_i + 1
 
-        puts "#{exception.message} on line #{error_line.to_s}"
-        puts exception.backtrace.join "\n"
-      end
+      #   puts "#{exception.message} on line #{error_line.to_s}"
+      #   puts exception.backtrace.join "\n"
+      # end
     end
 
     # Is called when a command have been received and parsed, this distributes
@@ -109,19 +109,15 @@ module Blur
         network.transmit :QUIT, 'Got SIGINT?'
         network.disconnect
       end
-
-      EventMachine.stop
     end
 
     # Reloads configuration file and scripts.
     def reload!
-      EM.schedule do
-        unload_scripts!
-        load_config!
-        load_scripts!
+      unload_scripts!
+      load_config!
+      load_scripts!
 
-        yield if block_given?
-      end
+      yield if block_given?
     end
 
     # Loads all scripts in the script directory.
@@ -200,7 +196,7 @@ module Blur
     #
     # @returns true on success, false otherwise.
     def load_config!
-      config = YAML.load_file @config_path
+      config = YAML.load_file @config_path, aliases: true
 
       unless config.key? @environment
         raise ClientError, "No configuration found for specified environment `#{@environment}'"

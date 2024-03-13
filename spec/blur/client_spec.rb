@@ -7,12 +7,12 @@ describe Blur::Client do
   # Since #emit uses EM.defer to synchronize the threads, we'll have to stub it
   # out to avoid an error
   before(:each) do
-    allow(EM).to receive(:defer).and_yield
+    # allow(EM).to receive(:defer).and_yield
   end
 
   let :test_client_options do
     {
-      config_path: File.join(__dir__, '../../', 'config.yml'),
+      config_path: File.join(__dir__, '../fixtures/', 'config-with-aliases.yaml'),
       environment: 'testing'
     }
   end
@@ -41,7 +41,7 @@ describe Blur::Client do
     end
 
     it 'should trap the interrupt signal' do
-      interrupt_signal = Signal.list['INT']
+      interrupt_signal = 'INT'
 
       expect_any_instance_of(Blur::Client).to \
         receive(:trap).with interrupt_signal
@@ -53,19 +53,12 @@ describe Blur::Client do
   describe '#connect' do
     # Stub out eventmachine to avoid runtime errors
     before :each do
-      allow(EventMachine).to receive(:run).and_yield
-      allow(EventMachine).to receive :error_handler
       allow_any_instance_of(Blur::Network).to receive :connect
     end
 
     it 'should load scripts' do
       expect(subject).to receive :load_scripts!
 
-      subject.connect
-    end
-
-    it 'should start eventmachine' do
-      expect(EM).to receive(:run)
       subject.connect
     end
 
@@ -109,7 +102,6 @@ describe Blur::Client do
 
   describe '#quit' do
     before :each do
-      allow(EventMachine).to receive :stop
       allow_any_instance_of(Blur::Network).to receive :quit
       allow_any_instance_of(Blur::Network).to receive :transmit
       allow_any_instance_of(Blur::Network).to receive :disconnect
@@ -131,18 +123,9 @@ describe Blur::Client do
       subject.quit
     end
 
-    it 'should stop eventmachine' do
-      expect(EventMachine).to receive(:stop)
-
-      subject.quit
-    end
   end
 
   describe '#reload!' do
-    before :each do
-      allow(EventMachine).to receive(:schedule).and_yield
-    end
-
     it 'should unload previously loaded scripts' do
       expect(subject).to receive :unload_scripts!
       subject.reload!

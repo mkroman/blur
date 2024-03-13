@@ -29,7 +29,6 @@ describe Blur::Callbacks do
 
     before do
       allow_any_instance_of(Blur::Callbacks).to receive(:callbacks).and_return callbacks
-      allow(EventMachine).to receive(:defer).and_yield
     end
 
     context 'when there are no matching callbacks' do

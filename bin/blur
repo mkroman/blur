@@ -8,11 +8,4 @@ require_relative '../lib/blur/version'
 cli = Blur::CLI.new
 cli.run
 
-# raise "Configuration file `#{config_path}' is not readable" unless File.readable? config_path
-
-# EM.run do
-#   @client = Blur::Client.new options
-#   @client.connect
-# end
-
 # vim: syntax=ruby
