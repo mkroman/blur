@@ -10,5 +10,7 @@ gem 'semantic_logger', '~> 4.15'
 group :development do
   gem 'guard-rspec', require: false
   gem 'rspec', '~> 3.13'
+  gem 'simplecov'
+  gem 'simplecov-cobertura'
   gem 'solargraph'
 end

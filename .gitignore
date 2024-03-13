@@ -3,3 +3,4 @@ documentation/
 *.sublime-project
 *.sublime-workspace
 .bundle/
+coverage/
