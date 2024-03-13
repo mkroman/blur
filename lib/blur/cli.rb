@@ -110,6 +110,11 @@ module Blur
 
       logger.info "Blur #{Blur::VERSION}"
       load_config!
+
+      require_relative '../blur'
+
+      client = Blur::Client.new(config_path: "config-test.yaml")
+      client.connect
     end
 
     # Load and validate the config file.

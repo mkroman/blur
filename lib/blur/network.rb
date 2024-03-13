@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
+require_relative './network/connection'
+
 module Blur
   # The +Network+ module is to be percieved as an IRC network.
   #
   # Although the connection is a part of the network module, it is mainly used
   # for network-related structures, such as {User}, {Channel} and {Command}.
   class Network
+    include SemanticLogger::Loggable
+
     # +ConnectionError+ should only be triggered from within {Connection}.
     class ConnectionError < StandardError; end
 
@@ -105,12 +109,12 @@ module Blur
     #   remote certificate matches the specified fingerprint.
     # @option options [optional, Boolean] :ssl_no_verify Disable verification
     #   alltogether.
-    def initialize options, client = nil
+    def initialize(options, client = nil)
       @client = client
       @options = options
       @users = {}
       @channels = {}
-      @isupport = ISupport.new self
+      @isupport = ISupport.new(self)
       @capabilities = []
       @reconnect_interval = 3
       @server_ping_interval_max = @options.fetch('server_ping_interval',
@@ -118,14 +122,14 @@ module Blur
 
       unless options['nickname']
         raise ArgumentError, 'Network configuration for ' \
-          "`#{id}' is missing a nickname"
+                             "`#{id}' is missing a nickname"
       end
 
       @nickname = options['nickname']
-      @options['username'] ||= @options['nickname']
-      @options['realname'] ||= @options['username']
-      @options['channels'] ||= []
-      @id = options.fetch 'id', "#{host}:#{port}"
+      @username ||= @nickname
+      @realname ||= @username
+      @channels ||= []
+      @id = options.fetch('id', "#{host}:#{port}")
     end
 
     # Send a message to a recipient.
@@ -139,13 +143,8 @@ module Blur
     # Forwards the received message to the client instance.
     #
     # Called when the network connection has enough data to form a command.
-    def got_message message
-      @client.got_message self, message
-    rescue StandardError => e
-      puts "#{e.class}: #{e.message}"
-      puts
-      puts '---'
-      puts e.backtrace
+    def got_message(message)
+      @client.got_message(self, message)
     end
 
     # Find a channel by its name.
@@ -189,22 +188,17 @@ module Blur
     # Attempt to establish a connection and send initial data.
     #
     # @see Connection
-    def connect
-      # @log.info "Connecting to #{self}"
+    def connect(task = Async::Task.current)
+      logger.info "Connecting to #{self}"
 
-      begin
-        @connection = EventMachine.connect host, port, Connection, self
-      rescue EventMachine::ConnectionError => e
-        warn "Establishing connection to #{self} failed!"
-        warn e.message
-
-        schedule_reconnect
-        return
+      task.async do |subtask|
+        @connection = Network::Connection.new(host, port, self, secure: secure?)
+        @connection.connect(subtask)
       end
 
-      @ping_timer = EventMachine.add_periodic_timer DEFAULT_PING_INTERVAL do
-        periodic_ping_check
-      end
+      # @ping_timer = EventMachine.add_periodic_timer DEFAULT_PING_INTERVAL do
+      #   periodic_ping_check
+      # end
     end
 
     # Schedules a reconnect after a user-specified number of seconds.
@@ -247,8 +241,8 @@ module Blur
 
       transmit :CAP, 'LS'
       transmit :PASS, @options['password'] if @options['password']
-      transmit :NICK, @options['nickname']
-      transmit :USER, @options['username'], 'void', 'void', @options['realname']
+      transmit :NICK, @nickname
+      transmit :USER, @username, 'void', 'void', @realname
 
       @last_pong_time = Time.now
     end
@@ -269,7 +263,7 @@ module Blur
 
     # Called when the connection was closed.
     def disconnected!
-      @channels.each { |_, channel| channel.users.clear }
+      @channels.each_value { |channel| channel.users.clear }
       @channels.clear
       @users.clear
       @ping_timer.cancel
@@ -292,25 +286,26 @@ module Blur
     # @param [Symbol, String] name the command name.
     # @param [...] arguments all the prepended parameters.
     def transmit name, *arguments
-      message = IRCParser::Message.new command: name.to_s, parameters: arguments
+      message = IRCParser::Message.new(command: name.to_s, parameters: arguments)
 
-      if @client.verbose
-        formatted_command = message.command.to_s.ljust 8, ' '
-        formatted_params = message.parameters.map(&:inspect).join ' '
-        puts "→ #{formatted_command} #{formatted_params}"
+      if logger.trace?
+        formatted_command = message.command.to_s.ljust(8, ' ')
+        formatted_params = message.parameters.map(&:inspect).join(' ')
+
+        logger.trace("→ #{formatted_command} #{formatted_params}")
       end
 
-      @connection.send_data "#{message}\r\n"
+      @connection.send_data("#{message}\r\n")
     end
 
     # Send a private message.
-    def send_privmsg recipient, message
-      transmit :PRIVMSG, recipient, message
+    def send_privmsg(recipient, message)
+      transmit(:PRIVMSG, recipient, message)
     end
 
     # Join a channel.
-    def join channel
-      transmit :JOIN, channel
+    def join(channel)
+      transmit(:JOIN, channel)
     end
 
     # Convert it to a debug-friendly format.
