@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../library/blur'
+require_relative '../lib/blur'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |c|

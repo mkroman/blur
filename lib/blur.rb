@@ -2,13 +2,12 @@
 
 require 'yaml'
 require 'socket'
-require 'base64'
-require 'ostruct'
 require 'openssl'
 
+require 'async'
 require 'deep_merge/rails_compat'
-require 'eventmachine'
 require 'ircparser'
+require 'semantic_logger'
 
 # Require all library files.
 require_relative './blur/version'
@@ -20,7 +19,7 @@ require_relative './blur/client'
 require_relative './blur/user'
 require_relative './blur/channel'
 require_relative './blur/network/isupport'
-require_relative './blur/network/connection'
+# require_relative './blur/network/connection'
 
 # Blur is a very modular IRC-framework for ruby.
 #

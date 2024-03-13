@@ -1,0 +1,30 @@
+# Where to look for scripts to be loaded
+scripts_dir: scripts/
+
+## Network settings
+# Set up a list of networks to connect to on start
+networks:
+- hostname: irc.rwx.im
+  nickname: basic-example
+  secure: true
+  port: 6697
+  channels:
+  - "#blur-dev"
+
+## Script settings
+scripts:
+  ## Admin authentication script settings
+  auth:
+    # Set default admins (this will be cached once the script has loaded at
+    # least once, after that it's no longer used as long as the cache exists.)
+    #
+    # The format is a hostmask, i.e. `<nick>!<ident>@<host>`
+    admins:
+      - mk!mk@uplink.io
+      - mk!mk@maero.dk
+
+  ## Wolfram|Alpha script settings
+  wolfram_alpha:
+    # Wolfram|Alpha API key -- to sign up for one, visit the developer portal
+    # at https://developer.wolframalpha.com/portal/apisignup.html
+    api_key: my_api_key_here

@@ -3,4 +3,4 @@ Lint/AmbiguousOperator:
 Style/MethodDefParentheses:
   Enabled: false
 AllCops:
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.3

@@ -108,7 +108,6 @@ module Blur
     def initialize options, client = nil
       @client = client
       @options = options
-      # @log = ::Logging.logger[self]
       @users = {}
       @channels = {}
       @isupport = ISupport.new self

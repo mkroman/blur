@@ -60,7 +60,7 @@ module Blur
         end
       end
 
-      trap 2, &method(:quit)
+      trap 'INT', &method(:quit)
     end
 
     # Connect to each network available that is not already connected, then
