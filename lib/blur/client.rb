@@ -8,6 +8,7 @@ module Blur
   # It stores networks, scripts and callbacks, and is also encharge of
   # distributing the incoming commands to the right networks and scripts.
   class Client
+    include SemanticLogger::Loggable
     include Callbacks
     include Handling
 
@@ -67,18 +68,11 @@ module Blur
     # proceed to start the run-loop.
     def connect
       networks = @networks.reject &:connected?
-
       load_scripts!
-      networks.each &:connect
 
-      # EventMachine.error_handler do |exception|
-      #   message_pattern = /^.*?:(\d+):/
-      #   backtrace = exception.backtrace.first
-      #   error_line = backtrace.match(message_pattern)[1].to_i + 1
-
-      #   puts "#{exception.message} on line #{error_line.to_s}"
-      #   puts exception.backtrace.join "\n"
-      # end
+      Async do |task|
+        networks.each { |network| network.connect(task) }
+      end
     end
 
     # Is called when a command have been received and parsed, this distributes
@@ -123,7 +117,10 @@ module Blur
     # Loads all scripts in the script directory.
     def load_scripts!
       scripts_dir = File.expand_path @config['blur']['scripts_dir']
+      logger.debug("Loading scripts from #{scripts_dir.inspect}")
+
       script_file_paths = Dir.glob File.join scripts_dir, '*.rb'
+      logger.trace("Script directory contains #{script_file_paths.count} scripts")
 
       # Sort the script file paths by file name so they load by alphabetical
       # order.
@@ -149,12 +146,11 @@ module Blur
     #
     # @raise [Exception] if there was any problems loading the file
     def load_script_file file_path
+      logger.trace("Loading script #{file_path}")
+
       load file_path, true
-    rescue Exception => e
-      warn "The script `#{file_path}' failed to load"
-      warn "#{e.class}: #{e.message}"
-      warn ''
-      warn 'Backtrace:', '---', e.backtrace
+    rescue Exception => e # rubocop:disable Lint/RescueException
+      logger.error("The script `#{file_path}' failed to load", e)
     end
 
     # Instantiates each +SuperScript+ in the +Blur.scripts+ list by manually

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'async/queue'
+
 module Blur
   class Network
     # The +Connection+ class inherits the LineAndText protocol bundled with
@@ -7,11 +9,16 @@ module Blur
     #
     # It merely acts as a receiving handler for all messages eventmachine throws
     # at it through its lifetime.
-    #
-    # @see EventMachine::Protocols::LineAndTextProtocol
-    # @see EventMachine::Connection
-    class Connection < EM::Protocols::LineAndTextProtocol
-      SSLValidationError = Class.new StandardError
+    class Connection
+      include SemanticLogger::Loggable
+
+      # @return [String] the hostname to connect to
+      attr_accessor :host
+
+      # @return [Fixnum] the port to connect to
+      attr_accessor :port
+
+      class SSLValidationError < StandardError; end
 
       # @return [Float] the default connection timeout interval in seconds.
       DEFAULT_CONNECT_TIMEOUT_INTERVAL = 30
@@ -21,91 +28,67 @@ module Blur
         @connected == true
       end
 
-      # EventMachine instantiates this class, and then sends event messages to
-      # that instance.
-      def initialize network
+      def initialize(host, port, network, secure: true)
+        @host = host
+        @port = port
+        @secure = secure
         @network = network
         @connected = false
+
         connect_timeout = network.options.fetch 'connect_timeout',
                                                 DEFAULT_CONNECT_TIMEOUT_INTERVAL
+        @send_queue = Async::Queue.new
 
-        self.pending_connect_timeout = connect_timeout
-
-        super
+        # self.pending_connect_timeout = connect_timeout
       end
 
-      # Called when a new connection is being set up, all we're going to use
-      # it for is to enable SSL/TLS on our connection.
-      def post_init
-        return unless @network.secure?
+      # Constructs and returns an async endpoint.
+      def endpoint
+        if @secure
+          Async::IO::Endpoint.ssl(host, port)
+        else
+          Async::IO::Endpoint.tcp(host, port)
+        end
+      end
 
-        verify_peer = (@network.options[:ssl_no_verify] ? false : true)
-        start_tls verify_peer: verify_peer
+      def connect(task = Async::Task.current)
+        begin
+          socket = endpoint.connect
+          stream = Async::IO::Protocol::Line.new(Async::IO::Stream.new(socket))
+
+          task.async do
+            @network.connected!
+
+            while (line = stream.read_line)
+              receive_line(line)
+            end
+          rescue EOFError => e
+            logger.trace 'Socket received EOF', e
+          ensure
+            if socket
+              logger.trace('Closing socket')
+              socket.close
+            end
+          end
+        end
+
+        task.async do
+          while (line = @send_queue.dequeue)
+            stream.write_lines(line)
+          end
+        end
+      end
+
+      def send_data buf
+        @send_queue.enqueue buf
       end
 
       # Called when a line was received, the connection sends it to the network
       # delegate which then sends it to the client.
-      def receive_line line
-        message = IRCParser::Message.parse line
-
-        @network.got_message message
-      end
-
-      # Called when the SSL handshake was completed with the remote server,
-      # the reason we tell the network that we're connected here is to ensure
-      # that the SSL/TLS encryption succeeded before we start talking nonsense
-      # to the server.
-      def ssl_handshake_completed
-        connected!
-      end
-
-      # Validates that the peer certificate has the correct fingerprint as
-      # specified in the :fingerprint :ssl option.
-      #
-      # @note This doesn't support intermediate certificate authorities!
-      # @raise [SSLValidationError] Raised if the specified fingerprint doesn't
-      # match the certificates.
-      def ssl_verify_peer peer_cert
-        ssl_cert_file    = @network.options[:ssl_cert_file]
-        peer_certificate = OpenSSL::X509::Certificate.new peer_cert
-
-        if ssl_cert_file && !File.readable?(ssl_cert_file)
-          raise SSLValidationError, 'Could not read the CA certificate file.'
-        end
-
-        if fingerprint_verification?
-          fingerprint = @network.options[:ssl_fingerprint].to_s
-          peer_fingerprint = cert_sha1_fingerprint peer_certificate
-
-          if fingerprint != peer_fingerprint
-            raise SSLValidationError,
-                  "Expected fingerprint '#{fingerprint}', but got '#{peer_fingerprint}'"
-          end
-        end
-
-        if certificate_verification?
-          ca_certificate = OpenSSL::X509::Certificate.new File.read ssl_cert_file
-          valid_signature = peer_certificate.verify ca_certificate.public_key
-
-          raise SSLValidationError, 'Certificate verify failed' unless valid_signature
-        end
-
-        true
-      end
-
-      # Called once the connection is finally established.
-      def connection_completed
-        # We aren't completely connected yet if the connection is encrypted.
-        connected! unless @network.secure?
-      end
-
-      # Called just as the connection is being terminated, either by remote or
-      # local.
-      def unbind
-        @connected = false
-        @network.disconnected!
-
-        super
+      def receive_line(line)
+        message = IRCParser::Message.parse(line)
+        logger.trace(message)
+        @network.got_message(message)
       end
 
       private
@@ -125,22 +108,6 @@ module Blur
       # Returns true if we should verify the peer certificate.
       def certificate_verification?
         !@network.options[:ssl_cert_file].nil?
-      end
-
-      # Get the hexadecimal representation of the certificates public key.
-      def cert_sha1_fingerprint certificate
-        fingerprint = OpenSSL::Digest::SHA1.hexdigest certificate.to_der
-
-        # Format it the same way OpenSSL does.
-        fingerprint = fingerprint.chars.each_slice(2).map(&:join).join ':'
-        fingerprint.upcase
-      end
-
-      def ssl_fingerprint_error! peer_fingerprint
-        fingerprint = @network.options[:ssl_fingerprint]
-
-        raise SSLValidationError,
-              "Expected fingerprint '#{fingerprint}' but got '#{peer_fingerprint}'"
       end
     end
   end

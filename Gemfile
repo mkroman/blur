@@ -3,6 +3,7 @@
 source 'https://rubygems.org'
 
 gem 'async', '~> 2.9'
+gem 'async-io', '~> 1.41'
 gem 'deep_merge', '~> 1.2'
 gem 'ircparser', '~> 1.0'
 gem 'semantic_logger', '~> 4.15'
