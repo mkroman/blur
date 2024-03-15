@@ -35,11 +35,11 @@ module Blur
       # Emits +:connection_ready+ with the parameter +network+.
       #
       # Automatically joins the channels specified in +:channels+.
-      def got_end_of_motd network, _message
-        emit :connection_ready, network
+      def got_end_of_motd(network, _message)
+        emit(:connection_ready, network)
 
-        network.options['channels'].each do |channel|
-          network.join channel
+        network.channels.each_key do |channel_name|
+          network.join(channel_name)
         end
       end
 
@@ -244,7 +244,7 @@ module Blur
       # Emits +:channel_mode+ with the parameters +channel+ and +modes+.
       # === When it's user modes:
       # Emits +:user_mode+ with the parameters +user+ and +modes+.
-      def got_mode network, message
+      def got_mode(network, message)
         name, _modes, _limit, _nick, _mask = message.parameters
 
         return unless (_channel = network.channels[name])

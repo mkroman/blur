@@ -13,7 +13,7 @@ module Blur
       include SemanticLogger::Loggable
 
       # @return [String] the hostname to connect to
-      attr_accessor :host
+      attr_accessor :hostname
 
       # @return [Fixnum] the port to connect to
       attr_accessor :port
@@ -28,26 +28,30 @@ module Blur
         @connected == true
       end
 
-      def initialize(host, port, network, secure: true)
-        @host = host
+      def initialize(hostname, port, network, tls: true)
+        @hostname = hostname
         @port = port
-        @secure = secure
+        @tls = tls
         @network = network
         @connected = false
 
-        connect_timeout = network.options.fetch 'connect_timeout',
-                                                DEFAULT_CONNECT_TIMEOUT_INTERVAL
+        # connect_timeout = network.options.fetch 'connect_timeout',
+        #                                         DEFAULT_CONNECT_TIMEOUT_INTERVAL
         @send_queue = Async::Queue.new
 
         # self.pending_connect_timeout = connect_timeout
       end
 
-      # Constructs and returns an async endpoint.
+      def tls?
+        @tls == true
+      end
+
+      # Constructs and returns an async endpoint
       def endpoint
-        if @secure
-          Async::IO::Endpoint.ssl(host, port)
+        if tls?
+          Async::IO::Endpoint.ssl(hostname, port)
         else
-          Async::IO::Endpoint.tcp(host, port)
+          Async::IO::Endpoint.tcp(hostname, port)
         end
       end
 
@@ -79,7 +83,7 @@ module Blur
         end
       end
 
-      def send_data buf
+      def send_data(buf)
         @send_queue.enqueue buf
       end
 

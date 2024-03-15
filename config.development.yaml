@@ -5,11 +5,22 @@ scripts_dir: scripts/
 # Set up a list of networks to connect to on start
 networks:
 - hostname: irc.rwx.im
-  nickname: basic-example
-  secure: true
   port: 6697
+  tls: true
+  nickname: blur
+  username: blur
+  password: blur
+  realname: blur
   channels:
-  - "#blur-dev"
+  - { name: "#blur-dev" }
+  - { name: "#other-channel", key: "secret" }
+  # tls_cert_file: '…'
+  # tls_fingerprint: '…'
+  # server_ping_interval: 150
+  
+  # sasl:
+  #   username: 'aaa'
+  #   password: 'aaa'
 
 ## Script settings
 scripts:
@@ -20,8 +31,8 @@ scripts:
     #
     # The format is a hostmask, i.e. `<nick>!<ident>@<host>`
     admins:
-      - mk!mk@uplink.io
-      - mk!mk@maero.dk
+    - mk!mk@uplink.io
+    - mk!mk@maero.dk
 
   ## Wolfram|Alpha script settings
   wolfram_alpha:
