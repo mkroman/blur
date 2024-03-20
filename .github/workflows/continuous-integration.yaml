@@ -20,6 +20,8 @@ jobs:
       with:
         bundler-cache: true # runs 'bundle install' and caches installed gems automatically
     - name: Run specs
+      env:
+        COVERAGE: "true"
       run: bundle exec rspec --format documentation
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
