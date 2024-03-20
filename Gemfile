@@ -2,6 +2,7 @@
 
 source 'https://rubygems.org'
 
+gem 'addressable', '~> 2.8'
 gem 'async', '~> 2.9'
 gem 'async-io', '~> 1.41'
 gem 'deep_merge', '~> 1.2'

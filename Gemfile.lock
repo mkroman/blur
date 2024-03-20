@@ -1,6 +1,8 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    addressable (2.8.6)
+      public_suffix (>= 2.0.2, < 6.0)
     ast (2.4.2)
     async (2.9.0)
       console (~> 1.10)
@@ -68,6 +70,7 @@ GEM
     pry (0.14.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
+    public_suffix (5.0.4)
     racc (1.7.3)
     rainbow (3.1.1)
     rb-fsevent (0.11.2)
@@ -143,6 +146,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  addressable (~> 2.8)
   async (~> 2.9)
   async-io (~> 1.41)
   deep_merge (~> 1.2)
