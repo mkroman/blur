@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative './network/connection'
-
 module Blur
   # The +Network+ module is to be percieved as an IRC network.
   #
@@ -25,6 +23,7 @@ module Blur
     #
     # @return [String] the unique identifier for this network.
     attr_reader :id
+    attr_reader :hostname
     # @return [String] the current nickname.
     attr_accessor :nickname
     # @return [Hash] the network options.
@@ -58,32 +57,23 @@ module Blur
       @connection&.established?
     end
 
-    # Get the remote hostname.
-    #
-    # @return [String] the remote hostname.
-    def host
-      @options['hostname']
-    end
-
     # Get the remote port.
     # If no port is specified, it returns 6697 if using a secure connection,
     # returns 6667 otherwise.
     #
     # @return [Fixnum] the remote port
     def port
-      @options['port'] ||= secure? ? 6697 : 6667
+      @port || tls? ? 6697 : 6667
     end
 
     # Check to see if it's a secure connection.
-    def secure?
-      @options['secure'] == true
+    def tls?
+      @tls == true
     end
 
     # @return [Boolean] whether we want to authenticate with SASL.
     def sasl?
-      @options['sasl'] &&
-        @options['sasl']['username'] &&
-        @options['sasl']['password']
+      @sasl && @sasl['enabled']
     end
 
     # Instantiates the network.
@@ -109,35 +99,60 @@ module Blur
     #   remote certificate matches the specified fingerprint.
     # @option options [optional, Boolean] :ssl_no_verify Disable verification
     #   alltogether.
-    def initialize(options, client = nil)
-      @client = client
-      @options = options
-      @users = {}
-      @channels = {}
+    def initialize(network_config, client)
       @isupport = ISupport.new(self)
       @capabilities = []
+
+      @users = {}
+      @client = client
+
+      configure(network_config)
+    end
+
+    def configure(config)
+      @hostname = config['hostname']
+      @port = config['port']
+      @nickname = config['nickname']
+      @username = config['username'] || nickname
+      @realname = config['realname'] || username
+      @password = config['password']
+      @tls = config['tls'] || true
+
+      configure_sasl(config['sasl'])
+      configure_channels(config['channels'])
+      configure_limits(config)
+    end
+
+    def configure_limits(config)
       @reconnect_interval = 3
-      @server_ping_interval_max = @options.fetch('server_ping_interval',
-                                                 150).to_i
+      @server_ping_interval_max = config.fetch('server_ping_interval',
+                                               150).to_i
+    end
 
-      unless options['nickname']
-        raise ArgumentError, 'Network configuration for ' \
-                             "`#{id}' is missing a nickname"
+    def configure_sasl(sasl_config)
+      return unless sasl_config
+
+      @sasl = {}
+
+      @sasl['enabled'] = true
+      @sasl['username'] = sasl_config['username']
+      @sasl['password'] = sasl_config['password']
+    end
+
+    def configure_channels(channel_configs)
+      @channels = {}
+
+      channel_configs.each do |config|
+        @channels[config['name']] = Channel.new(config['name'], self)
       end
-
-      @nickname = options['nickname']
-      @username ||= @nickname
-      @realname ||= @username
-      @channels ||= []
-      @id = options.fetch('id', "#{host}:#{port}")
     end
 
     # Send a message to a recipient.
     #
     # @param [String, #to_s] recipient the recipient.
     # @param [String] message the message.
-    def say recipient, message
-      transmit :PRIVMSG, recipient.to_s, message
+    def say(recipient, message)
+      transmit(:PRIVMSG, recipient.to_s, message)
     end
 
     # Forwards the received message to the client instance.
@@ -151,7 +166,7 @@ module Blur
     #
     # @param [String] name the channel name.
     # @return [Network::Channel] the matching channel, or nil.
-    def channel_by_name name
+    def channel_by_name(name)
       @channels.find { |channel| channel.name == name }
     end
 
@@ -160,8 +175,8 @@ module Blur
     #
     # @param [String] nick the nickname.
     # @return [Array] a list of channels in which the user is located, or nil.
-    def channels_with_user nick
-      @channels.select { |channel| channel.user_by_nick nick }
+    def channels_with_user(nick)
+      @channels.select { |channel| channel.user_by_nick(nick) }
     end
 
     # Returns a list of user prefixes that a nick might contain.
@@ -192,22 +207,14 @@ module Blur
       logger.info "Connecting to #{self}"
 
       task.async do |subtask|
-        @connection = Network::Connection.new(host, port, self, secure: secure?)
+        @connection = Network::Connection.new(@hostname, @port, self, tls: @tls)
         @connection.connect(subtask)
       end
-
-      # @ping_timer = EventMachine.add_periodic_timer DEFAULT_PING_INTERVAL do
-      #   periodic_ping_check
-      # end
     end
 
     # Schedules a reconnect after a user-specified number of seconds.
     def schedule_reconnect
-      # @log.info "Reconnecting to #{self} in #{@reconnect_interval} seconds"
-
-      EventMachine.add_timer @reconnect_interval do
-        connect
-      end
+      raise NotImplementedError
     end
 
     def server_connection_timeout
@@ -222,9 +229,9 @@ module Blur
 
       return unless seconds_since_pong >= @server_ping_interval_max
 
-      # @log.info "No PING request from the server in #{seconds_since_pong}s!"
+      logger.info "No PING request from the server in #{seconds_since_pong}s!"
 
-      transmit 'PING', now.to_s
+      transmit('PING', now.to_s)
 
       # Wait 15 seconds and declare a timeout if we didn't get a PONG.
       previous_pong_time = @last_pong_time.dup
@@ -235,12 +242,12 @@ module Blur
     end
 
     # Called when the connection was successfully established.
-    def connected!
+    def connection_established
       @waiting_for_cap = true
       @capabilities.clear
 
       transmit :CAP, 'LS'
-      transmit :PASS, @options['password'] if @options['password']
+      transmit :PASS, @password if @password
       transmit :NICK, @nickname
       transmit :USER, @username, 'void', 'void', @realname
 
@@ -272,8 +279,6 @@ module Blur
       @client.network_connection_closed self
 
       return unless @options.fetch('reconnect', DEFAULT_RECONNECT)
-
-      schedule_reconnect
     end
 
     # Terminate the connection and clear all channels and users.
@@ -283,10 +288,10 @@ module Blur
 
     # Transmit a command to the server.
     #
-    # @param [Symbol, String] name the command name.
+    # @param [#to_s] command the command name.
     # @param [...] arguments all the prepended parameters.
-    def transmit name, *arguments
-      message = IRCParser::Message.new(command: name.to_s, parameters: arguments)
+    def transmit(command, *arguments)
+      message = IRCParser::Message.new(command: command.to_s, parameters: arguments)
 
       if logger.trace?
         formatted_command = message.command.to_s.ljust(8, ' ')
@@ -310,7 +315,7 @@ module Blur
 
     # Convert it to a debug-friendly format.
     def to_s
-      %(#<#{self.class.name} "#{host}":#{port}>)
+      %(#<#{self.class.name} "#{hostname}":#{port}>)
     end
   end
 end

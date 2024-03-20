@@ -8,12 +8,17 @@ module Blur
 
   # Load an validate a client configuration from a YAML file.
   class Config
+    # @return [String] the directory where scripts can place cache files
+    attr_reader :cache_dir
+
+    # @return [Array<Network>] list of network configurations
+    attr_accessor :networks
 
     # @return [Hash<String, Hash>] the configuration values for scripts
     attr_accessor :scripts
 
-    # @return [Array<Network>] list of network configurations
-    attr_accessor :networks
+    # @return [String] the path to the directory that contains scripts
+    attr_reader :scripts_dir
 
     # @return [String] the default directory to look for scripts in
     DEFAULT_SCRIPTS_DIR = 'scripts/'
@@ -21,6 +26,7 @@ module Blur
     def initialize
       @path = ''
       @networks = []
+      @cache_dir = 'cache/'
       @scripts = {}
       @scripts_dir = DEFAULT_SCRIPTS_DIR
     end
@@ -34,7 +40,7 @@ module Blur
       raise ConfigError, "Option `networks' is missing" unless networks
       raise ConfigError, "Option `networks' must be a list of networks" unless networks.is_a?(Array)
 
-      networks.each_with_index { |network, index| validate_network_config(network, index) }
+      import_networks(networks)
     end
 
     def self.load_file(path)
@@ -45,9 +51,14 @@ module Blur
 
     private
 
+    def import_networks(networks)
+      networks.each_with_index do |network, index|
+        @networks << network if validate_network_config(network, index)
+      end
+    end
+
     def validate_network_config(network, index)
       required_keys = %w[nickname hostname]
-
       required_keys.each do |key|
         value = network[key]
 

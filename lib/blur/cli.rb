@@ -113,7 +113,7 @@ module Blur
 
       require_relative '../blur'
 
-      client = Blur::Client.new(config_path: "config-test.yaml")
+      client = Blur::Client.new(@opts.config_path)
       client.connect
     end
 

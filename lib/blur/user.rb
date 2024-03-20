@@ -35,31 +35,31 @@ module Blur
 
     # Check to see if the user is an admin (+a)
     def admin?
-      @modes.include? 'a'
+      @modes.include?('a')
     end
 
     # Check to see if the user has voice (+v)
     def voice?
-      @modes.include? 'v'
+      @modes.include?('v')
     end
 
     # Check to see if the user is the owner (+q)
     def owner?
-      @modes.include? 'q'
+      @modes.include?('q')
     end
 
     # Check to see if the user is an operator (+o)
     def operator?
-      @modes.include? 'o'
+      @modes.include?('o')
     end
 
     # Check to see if the user is an half-operator (+h)
     def half_operator?
-      @modes.include? 'h'
+      @modes.include?('h')
     end
 
     # Instantiate a user with a nickname.
-    def initialize nick, network = nil
+    def initialize(nick, network = nil)
       @nick  = nick
       @modes = String.new
       @channels = []
@@ -74,7 +74,7 @@ module Blur
     # Merge the users mode corresponding to the leading character (+ or -).
     #
     # @param [String] modes the modes to merge with.
-    def merge_modes modes
+    def merge_modes(modes)
       addition = true
 
       modes.each_char do |char|
@@ -92,7 +92,7 @@ module Blur
     # Send a private message to the user.
     #
     # @param [String] message the message to send.
-    def say message
+    def say(message)
       @network.say self, message
     end
 
@@ -103,8 +103,8 @@ module Blur
 
     # Called when YAML attempts to save the object, which happens when a
     # scripts cache contains this user and the script is unloaded.
-    def to_yaml options = {}
-      @nick.to_yaml options
+    def to_yaml(options = {})
+      @nick.to_yaml(options)
     end
 
     # Get the users nickname.
@@ -115,7 +115,7 @@ module Blur
     private
 
     # Translate a nickname-prefix to a mode character.
-    def prefix_to_mode prefix
+    def prefix_to_mode(prefix)
       COMMON_SYMBOL_MODES[prefix]
     end
   end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative './handling'
+require_relative 'handling'
 
 module Blur
   # The +Client+ class is the controller of the low-level access.
@@ -9,21 +9,12 @@ module Blur
   # distributing the incoming commands to the right networks and scripts.
   class Client
     include SemanticLogger::Loggable
+
     include Callbacks
     include Handling
 
     # The default environment.
-    ENVIRONMENT = ENV['BLUR_ENV'] || 'development'
-
-    # The default configuration.
-    DEFAULT_CONFIG = {
-      'blur' => {
-        'cache_dir' => 'cache/',
-        'scripts_dir' => 'scripts/',
-        'networks' => []
-      },
-      'scripts' => {}
-    }.freeze
+    DEFAULT_ENVIRONMENT = ENV['BLUR_ENV'] || 'development'
 
     # @return [Array] a list of instantiated networks.
     attr_accessor :networks
@@ -31,47 +22,44 @@ module Blur
     attr_accessor :config
     # @return [Hash] initialized scripts.
     attr_accessor :scripts
-    # @return [Boolean] whether verbose logging is enabled.
-    attr_accessor :verbose
     # @return [String] the path to the currently used config file.
     attr_accessor :config_path
 
     # Instantiates the client, stores the options, instantiates the networks
     # and then loads available scripts.
     #
-    # @param [Hash] options the options for the client.
-    # @option options [String] :config_path path to a configuration file.
-    # @option options [String] :environment the client environment.
-    def initialize options = {}
+    # @param [String] config_path the path the client configuration in yaml format
+    # @param [String] environment the application environment to use
+    def initialize(config_path = DEFAULT_CONFIG_PATH, environment = DEFAULT_ENVIRONMENT)
       @scripts = {}
       @networks = []
-      @config_path = options[:config_path]
-      @environment = options[:environment] || ENVIRONMENT
-      @verbose = options[:verbose] == true
-
-      raise ConfigError, 'missing config file path in :config_path option' unless @config_path
+      @config_path = config_path
+      @environment = environment
 
       load_config!
+      load_scripts!
 
-      networks = @config['blur']['networks']
-
-      if networks&.any?
-        networks.each do |network_options|
-          @networks.<< Network.new network_options, self
-        end
-      end
-
-      trap 'INT', &method(:quit)
+      Signal.trap('INT', &method(:quit))
     end
 
     # Connect to each network available that is not already connected, then
     # proceed to start the run-loop.
     def connect
-      networks = @networks.reject &:connected?
-      load_scripts!
+      networks = @config.networks
+
+      if networks&.any?
+        @networks = []
+
+        networks.each do |network_options|
+          logger.trace "options:", network_options
+          @networks << Network.new(network_options, self)
+        end
+      end
+
+      logger.trace "networks:", @networks
 
       Async do |task|
-        networks.each { |network| network.connect(task) }
+        @networks.each { |network| network.connect(task) }
       end
     end
 
@@ -81,26 +69,25 @@ module Blur
     #
     # @param [Network] network the network that received the command.
     # @param [Network::Command] command the received command.
-    def got_message network, message
+    def got_message(network, message)
       puts "← #{message.command.to_s.ljust(8, ' ')} #{message.parameters.map(&:inspect).join ' '}" if @verbose
 
       name = :"got_#{message.command.downcase}"
-
-      __send__ name, network, message if respond_to? name
+      __send__(name, network, message) if respond_to?(name)
     end
 
     # Called when a network connection is either closed, or terminated.
-    def network_connection_closed network
-      emit :connection_close, network
+    def network_connection_closed(network)
+      emit(:connection_close, network)
     end
 
     # Try to gracefully disconnect from each network, unload all scripts and
     # exit properly.
     #
     # @param [optional, Symbol] signal The signal received by the system, if any.
-    def quit _signal = :SIGINT
+    def quit(_signal = :SIGINT)
       @networks.each do |network|
-        network.transmit :QUIT, 'Got SIGINT?'
+        network.transmit(:QUIT, 'Got SIGINT?')
         network.disconnect
       end
     end
@@ -116,10 +103,10 @@ module Blur
 
     # Loads all scripts in the script directory.
     def load_scripts!
-      scripts_dir = File.expand_path @config['blur']['scripts_dir']
+      scripts_dir = File.expand_path(@config.scripts_dir)
       logger.debug("Loading scripts from #{scripts_dir.inspect}")
 
-      script_file_paths = Dir.glob File.join scripts_dir, '*.rb'
+      script_file_paths = Dir.glob(File.join(scripts_dir, '*.rb'))
       logger.trace("Script directory contains #{script_file_paths.count} scripts")
 
       # Sort the script file paths by file name so they load by alphabetical
@@ -132,11 +119,11 @@ module Blur
         File.basename(a) <=> File.basename(b)
       end
 
-      script_file_paths.each { |script_path| load_script_file script_path }
+      script_file_paths.each { |script_path| load_script_file(script_path) }
 
       initialize_superscripts
 
-      emit :scripts_loaded
+      emit(:scripts_loaded)
     end
 
     # Loads the given +file_path+ as a Ruby script, wrapping it in an anonymous
@@ -145,7 +132,7 @@ module Blur
     # @param [String] file_path the path to the ruby script.
     #
     # @raise [Exception] if there was any problems loading the file
-    def load_script_file file_path
+    def load_script_file(file_path)
       logger.trace("Loading script #{file_path}")
 
       load file_path, true
@@ -160,15 +147,15 @@ module Blur
     # @raise [Exception] any exception that might occur in any scripts'
     #   #initialize method.
     def initialize_superscripts
-      scripts_config = @config['scripts']
-      scripts_cache_dir = File.expand_path @config['blur']['cache_dir']
+      scripts_config = @config.scripts
+      scripts_cache_dir = File.expand_path(@config.cache_dir)
 
       Blur.scripts.each do |name, superscript|
         script = superscript.allocate
-        script.cache = ScriptCache.load name, scripts_cache_dir
-        script.config = scripts_config.fetch name, {}
+        script.cache = ScriptCache.load(name, scripts_cache_dir)
+        script.config = scripts_config.fetch(name, {})
         script._client_ref = self
-        script.send :initialize
+        script.send(:initialize)
 
         @scripts[name] = script
       end
@@ -179,8 +166,8 @@ module Blur
     # This method will call #unloaded on the instance of each loaded script to
     # give it a chance to clean up any resources.
     def unload_scripts!
-      @scripts.each do |_name, script|
-        script.__send__ :unloaded if script.respond_to? :unloaded
+      @scripts.each_value do |script|
+        script.__send__(:unloaded) if script.respond_to?(:unloaded)
       end.clear
 
       Blur.reset_scripts!
@@ -192,16 +179,9 @@ module Blur
     #
     # @returns true on success, false otherwise.
     def load_config!
-      config = YAML.load_file @config_path, aliases: true
+      @config = Config.load_file(@config_path)
 
-      unless config.key? @environment
-        raise ClientError, "No configuration found for specified environment `#{@environment}'"
-      end
-
-      @config = config[@environment]
-      @config.deeper_merge! DEFAULT_CONFIG
-
-      emit :config_load
+      emit(:config_load)
     end
   end
 end

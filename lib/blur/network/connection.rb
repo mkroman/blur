@@ -13,41 +13,44 @@ module Blur
       include SemanticLogger::Loggable
 
       # @return [String] the hostname to connect to
-      attr_accessor :host
+      attr_accessor :hostname
 
       # @return [Fixnum] the port to connect to
       attr_accessor :port
+
+      # @return [Exception, nil] the last error that occurred, if any
+      attr_reader :error
 
       class SSLValidationError < StandardError; end
 
       # @return [Float] the default connection timeout interval in seconds.
       DEFAULT_CONNECT_TIMEOUT_INTERVAL = 30
 
+      def initialize(hostname, port, network, tls: true)
+        @hostname = hostname
+        @port = port
+        @tls = tls
+        @error = nil
+        @network = network
+        @connected = false
+        @tx_queue = Async::Queue.new
+      end
+
+      def tls?
+        @tls == true
+      end
+
       # Check whether or not connection is established.
       def established?
         @connected == true
       end
 
-      def initialize(host, port, network, secure: true)
-        @host = host
-        @port = port
-        @secure = secure
-        @network = network
-        @connected = false
-
-        connect_timeout = network.options.fetch 'connect_timeout',
-                                                DEFAULT_CONNECT_TIMEOUT_INTERVAL
-        @send_queue = Async::Queue.new
-
-        # self.pending_connect_timeout = connect_timeout
-      end
-
-      # Constructs and returns an async endpoint.
+      # Constructs and returns an async endpoint
       def endpoint
-        if @secure
-          Async::IO::Endpoint.ssl(host, port)
+        if tls?
+          Async::IO::Endpoint.ssl(hostname, port)
         else
-          Async::IO::Endpoint.tcp(host, port)
+          Async::IO::Endpoint.tcp(hostname, port)
         end
       end
 
@@ -57,35 +60,34 @@ module Blur
           stream = Async::IO::Protocol::Line.new(Async::IO::Stream.new(socket))
 
           task.async do
-            @network.connected!
+            connection_established
 
             while (line = stream.read_line)
-              receive_line(line)
+              received_line(line)
             end
           rescue EOFError => e
+            @error = e
             logger.trace 'Socket received EOF', e
           ensure
-            if socket
-              logger.trace('Closing socket')
-              socket.close
-            end
+            @connected = false
+            @writer&.stop
+            socket&.close
           end
         end
 
-        task.async do
-          while (line = @send_queue.dequeue)
-            stream.write_lines(line)
-          end
+        @writer = task.async do
+          @tx_queue.each { |line| stream.write_lines(line) }
         end
       end
 
-      def send_data buf
-        @send_queue.enqueue buf
+      # Pushes +buf+ to the transaction queue
+      def send_data(buf)
+        @tx_queue.enqueue(buf)
       end
 
       # Called when a line was received, the connection sends it to the network
       # delegate which then sends it to the client.
-      def receive_line(line)
+      def received_line(line)
         message = IRCParser::Message.parse(line)
         logger.trace(message)
         @network.got_message(message)
@@ -94,10 +96,9 @@ module Blur
       private
 
       # Called when connection has been established.
-      def connected!
+      def connection_established
         @connected = true
-
-        @network.connected!
+        @network.connection_established
       end
 
       # Returns true if we're expected to verify the certificate fingerprint.
