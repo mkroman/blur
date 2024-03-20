@@ -24,7 +24,7 @@ module Blur
     attr_accessor :network
 
     # Instantiate a user with a nickname, a network and a user list.
-    def initialize name, network = nil
+    def initialize(name, network = nil)
       @name    = name
       @users   = []
       @modes   = ''
@@ -34,15 +34,13 @@ module Blur
     # Merge the channels mode corresponding to the leading character (+ or -).
     #
     # @param [String] modes the modes to merge with.
-    def merge_modes modes
+    def merge_modes(modes)
       addition = true
 
       modes.each_char do |char|
         case char
-        when '+'
-          addition = true
-        when '-'
-          addition = false
+        when '+' then addition = true
+        when '-' then addition = false
         else
           addition ? @modes.concat(char) : @modes.delete!(char)
         end
@@ -52,8 +50,8 @@ module Blur
     # Send a message to the channel.
     #
     # @param [String] message the message to send.
-    def say message
-      @network.say self, message
+    def say(message)
+      @network.say(self, message)
     end
 
     # Convert it to a debug-friendly format.
@@ -66,8 +64,8 @@ module Blur
 
     # Called when YAML attempts to save the object, which happens when a
     # scripts cache contains this user and the script is unloaded.
-    def to_yaml options = {}
-      @name.to_yaml options
+    def to_yaml(options = {})
+      @name.to_yaml(options)
     end
 
     # Get the channels name.

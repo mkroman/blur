@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'English'
-
 module Blur
   class Network
     # ISupport class that enables servers to announce what they support.
@@ -28,7 +26,7 @@ module Blur
         # specified as the empty string, for example "#:".
         %w[CHANLIMIT] => lambda do |value|
           {}.tap do |result|
-            params = value.split ','
+            params = value.split(',')
             mappings = params.map { |param| param.split ':' }
 
             mappings.each do |prefixes, limit|
@@ -83,7 +81,7 @@ module Blur
         #    never take a parameter.
         %w[CHANMODES] => lambda do |value|
           {}.tap do |r|
-            r['A'], r['B'], r['C'], r['D'] = value.split(',').map &:chars
+            r['A'], r['B'], r['C'], r['D'] = value.split(',').map(&:chars)
           end
         end,
 
@@ -96,7 +94,7 @@ module Blur
       # Initialize a new ISupport with a network reference.
       #
       # @param network [Network] The parent network.
-      def initialize network
+      def initialize(network)
         super
 
         @network = network
@@ -121,12 +119,12 @@ module Blur
       # Parse a list of parameters to see what the server supports.
       #
       # @param parameters [Array] The list of parameters.
-      def parse *params
+      def parse(*params)
         params.each do |parameter|
-          name, value = parameter.split '='
+          name, value = parameter.split('=')
 
           if value
-            _, parser = PARSERS.find { |key, _value| key.include? name }
+            _, parser = PARSERS.find { |key, _value| key.include?(name) }
 
             self[name] = parser.nil? ? value : parser.call(value)
           else

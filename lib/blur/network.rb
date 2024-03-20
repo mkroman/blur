@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'network/connection'
-
 module Blur
   # The +Network+ module is to be percieved as an IRC network.
   #
@@ -135,6 +133,7 @@ module Blur
       return unless sasl_config
 
       @sasl = {}
+
       @sasl['enabled'] = true
       @sasl['username'] = sasl_config['username']
       @sasl['password'] = sasl_config['password']
@@ -215,11 +214,7 @@ module Blur
 
     # Schedules a reconnect after a user-specified number of seconds.
     def schedule_reconnect
-      # @log.info "Reconnecting to #{self} in #{@reconnect_interval} seconds"
-
-      EventMachine.add_timer @reconnect_interval do
-        connect
-      end
+      raise NotImplementedError
     end
 
     def server_connection_timeout
@@ -234,9 +229,9 @@ module Blur
 
       return unless seconds_since_pong >= @server_ping_interval_max
 
-      # @log.info "No PING request from the server in #{seconds_since_pong}s!"
+      logger.info "No PING request from the server in #{seconds_since_pong}s!"
 
-      transmit 'PING', now.to_s
+      transmit('PING', now.to_s)
 
       # Wait 15 seconds and declare a timeout if we didn't get a PONG.
       previous_pong_time = @last_pong_time.dup
@@ -247,7 +242,7 @@ module Blur
     end
 
     # Called when the connection was successfully established.
-    def connected!
+    def connection_established
       @waiting_for_cap = true
       @capabilities.clear
 
@@ -284,7 +279,6 @@ module Blur
       @client.network_connection_closed self
 
       return unless @options.fetch('reconnect', DEFAULT_RECONNECT)
-
     end
 
     # Terminate the connection and clear all channels and users.

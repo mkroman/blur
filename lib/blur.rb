@@ -13,16 +13,16 @@ require 'ircparser'
 require 'semantic_logger'
 
 # Require all library files.
-require_relative './blur/version'
-require_relative './blur/callbacks'
-require_relative './blur/script'
-require_relative './blur/script_cache'
-require_relative './blur/network'
-require_relative './blur/client'
-require_relative './blur/user'
-require_relative './blur/channel'
-require_relative './blur/network/isupport'
-# require_relative './blur/network/connection'
+require_relative 'blur/version'
+require_relative 'blur/callbacks'
+require_relative 'blur/script'
+require_relative 'blur/script_cache'
+require_relative 'blur/network'
+require_relative 'blur/client'
+require_relative 'blur/user'
+require_relative 'blur/channel'
+require_relative 'blur/network/isupport'
+require_relative 'blur/network/connection'
 
 # Blur is a very modular IRC-framework for ruby.
 #
@@ -36,11 +36,11 @@ module Blur
   class ConfigError < StandardError; end
 
   # Creates a new superscript class and inserts it into the list of scripts.
-  def self.Script name, *_args, &block
-    klass = Class.new SuperScript
+  def self.Script(name, *_args, &) # rubocop:disable Naming/MethodName
+    klass = Class.new(SuperScript)
     klass.name = name
     klass.events = {}
-    klass.class_exec &block
+    klass.class_exec(&)
     klass.init
 
     scripts[name] = klass
@@ -56,7 +56,7 @@ module Blur
   # This method will call `deinit` on each script class before removing them to
   # give them a chance to clean up.
   def self.reset_scripts!
-    scripts.each_value &:deinit
+    scripts.each_value(&:deinit)
     scripts.clear
   end
 
@@ -67,9 +67,9 @@ module Blur
   # @param [Hash] options the options for the client.
   # @option options [Array] networks list of hashes that contain network
   #   options.
-  def self.connect options = {}, &block
+  def self.connect(options = {}, &block)
     Client.new(options).tap do |client|
-      client.instance_eval &block
+      client.instance_eval(&block)
     end.connect
   end
 end

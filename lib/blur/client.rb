@@ -9,6 +9,7 @@ module Blur
   # distributing the incoming commands to the right networks and scripts.
   class Client
     include SemanticLogger::Loggable
+
     include Callbacks
     include Handling
 
@@ -36,15 +37,14 @@ module Blur
       @environment = environment
 
       load_config!
+      load_scripts!
 
-      trap 'INT', &method(:quit)
+      Signal.trap('INT', &method(:quit))
     end
 
     # Connect to each network available that is not already connected, then
     # proceed to start the run-loop.
     def connect
-      load_scripts!
-
       networks = @config.networks
 
       if networks&.any?
@@ -73,7 +73,6 @@ module Blur
       puts "← #{message.command.to_s.ljust(8, ' ')} #{message.parameters.map(&:inspect).join ' '}" if @verbose
 
       name = :"got_#{message.command.downcase}"
-
       __send__(name, network, message) if respond_to?(name)
     end
 

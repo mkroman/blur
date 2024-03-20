@@ -14,7 +14,7 @@ module Blur
       # Inserts the command to the LUT.
       #
       # @returns the index.
-      def << command
+      def <<(command)
         @commands[command] = @index += 1
         @index
       end
@@ -27,27 +27,27 @@ module Blur
       #   command! '!ping' do |user, channel, args|
       #     channel.say "#{user}: pong"
       #   end
-      def command! command, *_args, &block
+      def command!(command, *_args, &)
         id = (command_lut << command)
-        define_method :"_command_#{id}", &block
+        define_method(:"_command_#{id}", &)
       end
     end
 
-    def self.included klass
+    def self.included(klass)
       class << klass
         attr_accessor :command_lut
       end
 
       klass.extend ClassMethods
       klass.command_lut = CommandLUT.new
-      klass.register! message: lambda { |script, user, channel, line, tags|
-        command, args = line.split ' ', 2
+      klass.register!(message: lambda do |script, user, channel, line, tags|
+        command, args = line.split(' ', 2)
         return unless command
 
         if (id = klass.command_lut.commands[command.downcase])
-          script.__send__ :"_command_#{id}", user, channel, args, tags
+          script.__send__(:"_command_#{id}", user, channel, args, tags)
         end
-      }
+      end)
     end
   end
 
@@ -59,7 +59,7 @@ module Blur
       #
       # @example
       #   Author 'John Doe <john.doe@example.com>'
-      def Author *authors
+      def Author(*authors) # rubocop:disable Naming/MethodName
         @authors = authors
       end
 
@@ -67,7 +67,7 @@ module Blur
       #
       # @example
       #   Description 'This is an example script.'
-      def Description description
+      def Description(description) # rubocop:disable Naming/MethodName
         @description = description
       end
 
@@ -75,7 +75,7 @@ module Blur
       #
       # @example
       #   Version '1.0.0'
-      def Version version
+      def Version(version) # rubocop:disable Naming/MethodName
         @version = version
       end
 
@@ -83,24 +83,24 @@ module Blur
       #
       # @example
       #   register! message: :on_message, connection_ready: :connected
-      def register! *args
+      def register!(*args)
         args.each do |events|
           case events
           when Hash
             events.each do |event, method_name|
-              register_event! event, method_name
+              register_event!(event, method_name)
             end
           when Array
-            register! *events
+            register!(*events)
           when Symbol
-            register_event! events
+            register_event!(events)
           end
         end
       end
 
       # Adds the given event +name+ and the name of the method to call once the
       # event is emitted.
-      def register_event! name, method_name = name
+      def register_event!(name, method_name = name)
         (@events[name] ||= []) << method_name
       end
 
@@ -137,7 +137,7 @@ module Blur
     def unloaded; end
 
     # Gets the instantiated script with +name+.
-    def script name
+    def script(name)
       _client_ref.scripts[name]
     end
 

@@ -44,74 +44,73 @@ module Blur
       end
 
       # Called when the namelist of a channel was received.
-      def got_name_reply network, message
+      def got_name_reply(network, message)
         name  = message.parameters[2] # Channel name.
         nicks = message.parameters[3].split.map do |nick|
           # Slice the nick if the first character is a user mode prefix.
-          nick.slice! 0 if network.user_prefixes.include? nick.chr
-
+          nick.slice!(0) if network.user_prefixes.include?(nick.chr)
           nick
         end
 
         return unless (channel = find_or_create_channel(name, network))
 
-        users = nicks.map { |nick| find_or_create_user nick, network }
+        users = nicks.map { |nick| find_or_create_user(nick, network) }
         users.each do |user|
           user.channels << channel
-          channel.users << user unless channel.users.include? user
+          channel.users << user unless channel.users.include?(user)
         end
 
-        emit :channel_who_reply, channel
+        emit(:channel_who_reply, channel)
       end
 
       # Called when a channel topic was changed.
       #
       # == Callbacks:
       # Emits :topic_change with the parameters +channel+ and +topic+.
-      def got_channel_topic network, message
+      def got_channel_topic(network, message)
         _, channel_name, topic = message.parameters
 
         return unless (channel = find_or_create_channel(channel_name, network))
 
-        emit :channel_topic, channel, topic
+        emit(:channel_topic, channel, topic)
 
         channel.topic = topic
       end
 
       # Called when the server needs to verify that we're alive.
-      def got_ping network, message
+      def got_ping(network, message)
         network.last_pong_time = Time.now
-        network.transmit :PONG, message.parameters[0]
+        network.transmit(:PONG, message.parameters[0])
 
-        emit :network_ping, network, message.parameters[0]
+        emit(:network_ping, network, message.parameters[0])
       end
 
       # Called when the server reponds to our periodic PINGs.
-      def got_pong network, message
+      def got_pong(network, message)
         network.last_pong_time = Time.now
 
-        emit :network_pong, network, message.parameters[0]
+        emit(:network_pong, network, message.parameters[0])
       end
 
       # Called when a user changed nickname.
       #
       # == Callbacks:
       # Emits :user_rename with the parameters +channel+, +user+ and +new_nick+
-      def got_nick network, message
+      def got_nick(network, message)
         old_nick = message.prefix.nick
 
         # Update or own nickname if has been changed by the server
         if network.nickname == old_nick
           new_nick = message.parameters[0]
 
-          emit :nick, new_nick
+          emit(:nick, new_nick)
           network.nickname = new_nick
         end
 
         return unless (user = network.users.delete(old_nick))
 
         new_nick = message.parameters[0]
-        emit :user_rename, user, new_nick
+        emit(:user_rename, user, new_nick)
         user.nick = new_nick
         network.users[new_nick] = user
       end
@@ -125,7 +124,7 @@ module Blur
       # Emits +:private_message+ with the parameters +user+ and +message+.
       #
       # @note Messages are contained as strings.
-      def got_privmsg network, message
+      def got_privmsg(network, message)
         return unless message.prefix.nick # Ignore all server privmsgs
 
         name, msg = message.parameters
@@ -133,21 +132,21 @@ module Blur
 
         if (channel = network.channels[name])
           unless (user = network.users[message.prefix.nick])
-            user = User.new message.prefix.nick, network
+            user = User.new(message.prefix.nick, network)
           end
 
           user.name = message.prefix.user
           user.host = message.prefix.host
 
-          emit :message, user, channel, msg, tags
+          emit(:message, user, channel, msg, tags)
         else # This is a private message
           unless (user = network.users[message.prefix.nick])
-            user = User.new message.prefix.nick, network
+            user = User.new(message.prefix.nick, network)
             user.name = message.prefix.user
             user.host = message.prefix.host
           end
 
-          emit :private_message, user, msg, tags
+          emit(:private_message, user, msg, tags)
         end
       end
 
@@ -155,51 +154,51 @@ module Blur
       #
       # == Callbacks:
       # Emits +:user_entered+ with the parameters +channel+ and +user+.
-      def got_join network, message
+      def got_join(network, message)
         channel_name = message.parameters[0]
 
-        user = find_or_create_user message.prefix.nick, network
+        user = find_or_create_user(message.prefix.nick, network)
         user.name = message.prefix.user
         user.host = message.prefix.host
 
         return unless (channel = find_or_create_channel(channel_name, network))
 
-        _user_join_channel user, channel
+        _user_join_channel(user, channel)
 
-        emit :user_entered, channel, user
+        emit(:user_entered, channel, user)
       end
 
       # Called when a user left a channel.
       #
       # == Callbacks:
       # Emits +:user_left+ with the parameters +channel+ and +user+.
-      def got_part network, message
+      def got_part(network, message)
         channel_name = message.parameters[0]
 
         return unless (channel = network.channels[channel_name])
         return unless (user = network.users[message.prefix.nick])
 
-        _user_part_channel user, channel
+        _user_part_channel(user, channel)
 
-        emit :user_left, channel, user
+        emit(:user_left, channel, user)
       end
 
       # Called when a user disconnected from a network.
       #
       # == Callbacks:
       # Emits +:user_quit+ with the parameters +channel+ and +user+.
-      def got_quit network, message
+      def got_quit(network, message)
         nick = message.prefix.nick
         reason = message.parameters[2]
 
         return unless (user = network.users[nick])
 
         user.channels.each do |channel|
-          channel.users.delete user
+          channel.users.delete(user)
         end
 
-        emit :user_quit, user, reason
-        network.users.delete nick
+        emit(:user_quit, user, reason)
+        network.users.delete(nick)
       end
 
       # Called when a user was kicked from a channel.
@@ -216,22 +215,22 @@ module Blur
         return unless (kicker = network.users[message.prefix.nick])
         return unless (kickee = network.users[target])
 
-        _user_part_channel kickee, channel
+        _user_part_channel(kickee, channel)
 
-        emit :user_kicked, kicker, channel, kickee, reason
+        emit(:user_kicked, kicker, channel, kickee, reason)
       end
 
       # Called when a topic was changed for a channel.
       #
       # == Callbacks:
       # Emits :topic with the parameters +user+, +channel+ and +topic+.
-      def got_topic network, message
+      def got_topic(network, message)
         _channel_name, topic = message.parameters
 
         return unless (channel = network.channels[channel.name])
 
         if (user = network.users[message.prefix.nick])
-          emit :topic, user, channel, topic
+          emit(:topic, user, channel, topic)
         end
 
         channel.topic = topic
@@ -251,7 +250,7 @@ module Blur
       end
 
       # Called when the network announces its ISUPPORT parameters.
-      def got_005 network, message
+      def got_005(network, message)
         params = message.parameters[1..-2]
 
         network.isupport.parse(*params)
@@ -260,7 +259,7 @@ module Blur
       # Received when the server supports capability negotiation.
       #
       # CAP * LS :multi-prefix sasl
-      def got_cap network, message
+      def got_cap(network, message)
         _id, command = message.parameters[0..1]
 
         case command
@@ -274,14 +273,14 @@ module Blur
 
           network.transmit :CAP, 'REQ', req.join(' ') if req.any?
 
-          capabilities.each { |name| network.capabilities.push name }
+          capabilities.each { |name| network.capabilities.push(name) }
 
-          emit :network_capabilities, network, capabilities
+          emit(:network_capabilities, network, capabilities)
 
         when 'ACK'
           capabilities = message.parameters[2]&.split
 
-          network.transmit :AUTHENTICATE, 'PLAIN' if capabilities&.include?('sasl') && network.sasl?
+          network.transmit(:AUTHENTICATE, 'PLAIN') if capabilities&.include?('sasl') && network.sasl?
 
           network.cap_end if network.waiting_for_cap
         when 'NAK'
@@ -296,7 +295,7 @@ module Blur
         end
       end
 
-      def got_001 network, message
+      def got_001(network, message)
         network.abort_cap_neg if network.waiting_for_cap
 
         # Get our nickname from the server
@@ -304,7 +303,7 @@ module Blur
         network.nickname = nickname
       end
 
-      def got_authenticate network, message
+      def got_authenticate(network, message)
         case message.parameters[0]
         when '+'
           return unless network.sasl?
@@ -312,19 +311,19 @@ module Blur
           sasl = network.options['sasl']
 
           response = "#{sasl['username']}\x00#{sasl['username']}\x00#{sasl['password']}"
-          network.transmit :AUTHENTICATE, Base64.encode64(response).strip
+          network.transmit(:AUTHENTICATE, Base64.encode64(response).strip)
         end
       end
 
       # :server 900 <nick> <nick>!<ident>@<host> <account> :You are now logged in as <user>
       # RPL_LOGGEDIN SASL
-      def got_900 network, _message
+      def got_900(network, _message)
         network.cap_end if network.waiting_for_cap
       end
 
       # :server 904 <nick> :SASL authentication failed
       # ERR_SASLFAIL
-      def got_904 network, message
+      def got_904(network, message)
         _nick, _message = message.parameters
 
         puts 'SASL authentication failed! Disconnecting!'
@@ -332,9 +331,9 @@ module Blur
         network.disconnect
       end
 
-      def got_nickname_in_use network, message
+      def got_nickname_in_use(network, _message)
         nickname = network.options['nickname']
-        network.transmit :NICK, "#{nickname}_"
+        network.transmit(:NICK, "#{nickname}_")
       end
 
       alias got_353 got_name_reply
@@ -345,36 +344,36 @@ module Blur
 
       private
 
-      def _user_part_channel user, channel
-        user.channels.delete channel
-        channel.users.delete user
+      def _user_part_channel(user, channel)
+        user.channels.delete(channel)
+        channel.users.delete(user)
 
         # Forget the user if we no longer share any channels.
         return unless user.channels.empty?
 
-        user.network.users.delete user.nick
+        user.network.users.delete(user.nick)
       end
 
-      def _user_join_channel user, channel
+      def _user_join_channel(user, channel)
         channel.users << user
         user.channels << channel
       end
 
-      def find_or_create_user nick, network
+      def find_or_create_user(nick, network)
         unless (user = network.users[nick])
-          user = User.new nick, network
+          user = User.new(nick, network)
           network.users[nick] = user
-          emit :user_created, user
+          emit(:user_created, user)
         end
 
         user
       end
 
-      def find_or_create_channel name, network
+      def find_or_create_channel(name, network)
         unless (channel = network.channels[name])
-          channel = Channel.new name, network
+          channel = Channel.new(name, network)
           network.channels[name] = channel
-          emit :channel_created, channel
+          emit(:channel_created, channel)
         end
 
         channel
