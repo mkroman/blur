@@ -1,7 +1,7 @@
 #!/usr/bin/gem build
 # frozen_string_literal: true
 
-require_relative './library/blur/version'
+require_relative 'lib/blur/version'
 
 Gem::Specification.new do |spec|
   spec.name     = 'blur'
