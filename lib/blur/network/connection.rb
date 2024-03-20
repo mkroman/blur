@@ -14,10 +14,8 @@ module Blur
 
       # @return [String] the hostname to connect to
       attr_accessor :hostname
-
       # @return [Fixnum] the port to connect to
       attr_accessor :port
-
       # @return [Exception, nil] the last error that occurred, if any
       attr_reader :error
 

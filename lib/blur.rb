@@ -23,6 +23,7 @@ require_relative 'blur/user'
 require_relative 'blur/channel'
 require_relative 'blur/network/isupport'
 require_relative 'blur/network/connection'
+require_relative 'blur/url_handling'
 
 # Blur is a very modular IRC-framework for ruby.
 #
