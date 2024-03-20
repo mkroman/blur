@@ -153,7 +153,7 @@ module Blur
       Blur.scripts.each do |name, superscript|
         script = superscript.allocate
         script.cache = ScriptCache.load(name, scripts_cache_dir)
-        script.config = scripts_config.fetch(name, {})
+        script.config = scripts_config.fetch(name.to_s, {})
         script._client_ref = self
         script.send(:initialize)
 

@@ -34,6 +34,17 @@ module Blur
     def parse_file!(path)
       data = YAML.safe_load_file(path, aliases: true)
 
+      # Parse and validate script configuration
+      scripts = data['scripts']
+
+      if scripts
+        raise ConfigError, "Option `scripts' must be a Hash" unless scripts.is_a?(Hash)
+
+        if scripts.keys.find { |key| !key.is_a?(String) }
+          raise ConfigError, "Option `scripts' must only use strings as keys"
+        end
+      end
+
       # Parse and validate network configurations
       networks = data['networks']
 
@@ -41,6 +52,7 @@ module Blur
       raise ConfigError, "Option `networks' must be a list of networks" unless networks.is_a?(Array)
 
       import_networks(networks)
+      import_scripts(scripts)
     end
 
     def self.load_file(path)
@@ -55,6 +67,10 @@ module Blur
       networks.each_with_index do |network, index|
         @networks << network if validate_network_config(network, index)
       end
+    end
+
+    def import_scripts(scripts)
+      @scripts = scripts
     end
 
     def validate_network_config(network, index)
