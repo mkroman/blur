@@ -113,8 +113,8 @@ module Blur
       @hostname = config['hostname']
       @port = config['port']
       @nickname = config['nickname']
-      @username = config['username'] || nickname
-      @realname = config['realname'] || username
+      @username = config['username'] || @nickname
+      @realname = config['realname'] || @username
       @password = config['password']
       @tls = config['tls'] || true
 

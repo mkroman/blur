@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'async', '~> 2.9'
   spec.add_runtime_dependency 'async-io', '~> 1.41'
   spec.add_runtime_dependency 'deep_merge', '~> 1.2'
-  spec.add_runtime_dependency 'ircparser', '~> 0.6'
+  spec.add_runtime_dependency 'ircparser', '~> 1.0'
   spec.add_runtime_dependency 'semantic_logger', '~> 4.15'
 
   spec.executables << 'blur'
