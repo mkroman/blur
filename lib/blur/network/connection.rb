@@ -55,7 +55,7 @@ module Blur
       def connect(task = Async::Task.current)
         begin
           socket = endpoint.connect
-          stream = Async::IO::Protocol::Line.new(Async::IO::Stream.new(socket))
+          stream = Async::IO::Protocol::Line.new(Async::IO::Stream.new(socket), "\r\n")
 
           task.async do
             connection_established
